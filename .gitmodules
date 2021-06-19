@@ -1,0 +1,9 @@
+[submodule "lib/TMCStepper"]
+	path = lib/TMCStepper
+	url = https://github.com/teemuatlut/TMCStepper.git
+[submodule "lib/AccelStepper"]
+	path = lib/AccelStepper
+	url = https://github.com/waspinator/AccelStepper.git
+[submodule "lib/StepperDriver"]
+	path = lib/StepperDriver
+	url = https://github.com/laurb9/StepperDriver.git
