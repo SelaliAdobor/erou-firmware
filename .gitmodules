@@ -7,3 +7,12 @@
 [submodule "lib/StepperDriver"]
 	path = lib/StepperDriver
 	url = https://github.com/laurb9/StepperDriver.git
+[submodule "RemoteDebug"]
+	path = RemoteDebug
+	url = https://github.com/JoaoLopesF/RemoteDebug.git
+[submodule "RemoteDebugger"]
+	path = RemoteDebugger
+	url = https://github.com/JoaoLopesF/RemoteDebugger.git
+[submodule "lib/RemoteDebug"]
+	path = lib/RemoteDebug
+	url = https://github.com/JoaoLopesF/RemoteDebug
