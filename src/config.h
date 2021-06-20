@@ -2,12 +2,35 @@
 
 namespace config
 {
+
+    const long startupDelay = 5000L;
     //Includes the skipped empty slot
     const int containerCount = 8;
 
-    const bool runningBlink = true;
-    const int runningBlinkInterval = 500;
+    const char *const hostname = "erou";
+    namespace debug
+    {
+        const int bufferSize = 4048;
+    }
+    namespace serial
+    {
+        const long serialBaud = 115200;
+    }
 
+    namespace blinkTask
+    {
+        const int stackSize = 500;
+        const int priority = 1;
+        const bool enabled = true;
+        const int blinkInterval = 500;
+    }
+
+    namespace loopTask
+    {
+        const int stackSize = 8192;
+        const int priority = 1;
+        const int core = 1;
+    }
 
     namespace stepper
     {
@@ -22,7 +45,7 @@ namespace config
         const int coastingDurationMs = 200;
         const int maxHomingDurationMs = 1 * 60 * 1000;
 
-        const float rpmHomingCorrection = 1;
+        const float rpmHomingCorrection = 10;
         const float rpmHomingTravel = 35;
         const float rpmContainerTravelMin = 10;
         const float rpmContainerTravelMax = 35;

@@ -1,29 +1,30 @@
 #pragma once
 
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+
 #include "BasicStepperDriver.h"
 #include <functional>
-
-
 
 class Motion
 {
 private:
-    BasicStepperDriver stepper; 
+    BasicStepperDriver stepper;
     std::function<void(bool)> onHomeStatusChanged = nullptr;
+    int currentContainer = 0;
 
     void setSpeedControl(bool enabled);
 
-
-
-    
     void setupHoming();
     bool isHomeSensorTriggered();
     void homingSensorTask();
+    void internalHoming(float rpm, bool reverse);
 
-     static TaskHandle_t homingSensorTaskHandle;
-    inline  static void homingSensorTaskWrapper(void*);
-    int currentContainer = 0;
+    static TaskHandle_t homingSensorTaskHandle;
+    inline static void homingSensorTaskWrapper(void *);
+
     static void homingSensorIsr();
+
 public:
     Motion(BasicStepperDriver stepper);
 
