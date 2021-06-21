@@ -22,10 +22,10 @@ void setupStepperPins()
 
 void Motion::setup()
 {
-    debugD("motion setup setting up stepper pins");
+    debugV("motion setup setting up stepper pins");
     setupStepperPins();
 
-    debugD("motion setup setting up homing");
+    debugV("motion setup setting up homing");
     setupHoming();
 
     delay(1000);
@@ -35,7 +35,7 @@ void Motion::setup()
 
     stepper.enable();
 
-    debugD("motion setup completed");
+    debugV("motion setup completed");
 }
 
 void Motion::setSpeedControl(bool enabled)
@@ -50,25 +50,25 @@ void Motion::setSpeedControl(bool enabled)
         stepper.setSpeedProfile(stepper.CONSTANT_SPEED, 9999, 9999);
     }
 
-    debugD("motion speed control changed %d", enabled);
+    debugV("motion speed control changed %d", enabled);
 }
 
 void Motion::goToContainerAt(const int index)
 {
-    debugD("motion going to container, index %d", index);
+    debugV("motion going to container, index %d", index);
     currentContainer = index;
 
-    debugD("motion going to container starting homing");
+    debugV("motion going to container starting homing");
     goToHome(false);
-    debugD("motion going to container homed");
+    debugV("motion going to container homed");
 
     float scaledRpm = map(index, 0, config::containerCount - 1, config::motion::rpmContainerTravelMin, config::motion::rpmContainerTravelMax);
     float rotation = index * config::motion::angleBetweenContainers;
 
-    debugD("motion going to container starting rotation, scaledRpm: %f rotated: %f", scaledRpm, rotation);
+    debugV("motion going to container starting rotation, scaledRpm: %f rotated: %f", scaledRpm, rotation);
 
     stepper.setRPM(scaledRpm);
     stepper.rotate(index * config::motion::angleBetweenContainers);
 
-    debugD("motion going to container finished");
+    debugV("motion going to container finished");
 }

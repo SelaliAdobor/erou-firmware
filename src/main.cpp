@@ -10,7 +10,6 @@
 #include "ota.h"
 #include "ota_credentials.h"
 #include "debug.h"
-#include "debug.h"
 #include "soc/soc.h"
 #include "soc/soc.h"
 #include "esp_wifi.h"
@@ -28,7 +27,7 @@ Motion motion = Motion(driver);
 
 void runningBlinkTask(void *unused)
 {
-  debugD("blink task starting");
+  debugV("blink task starting");
   for (;;)
   {
     digitalWrite(pins::onboardLed, HIGH);
@@ -67,31 +66,30 @@ void setupWifi()
 
   while (WiFi.waitForConnectResult() != WL_CONNECTED)
   {
-    debugD("setting up wifi");
+    debugV("setting up wifi");
     delay(5000);
     ESP.restart();
   }
 }
-
+  
 void setup()
 {
+  setupWifi();
   //In some cases code can cause the entire board to restart,
   //This delay allows a window for new programming
   delay(config::startupDelay);
 
-  setupWifi();
+  DebugInstance.setup();
 
-  debugSetup();
-
-  debugD("setting up pins");
+  debugV("setting up pins");
   pins::setup();
 
-  debugD("setting up motions");
+  debugV("setting up motions");
   motion.setup();
 
   if (config::blinkTask::enabled)
   {
-    debugD("setting up blink");
+    debugV("setting up blink");
     xTaskCreate(
         runningBlinkTask,             // Function that should be called
         "Blink While Running",        // Name of the task (for debugging)
@@ -102,7 +100,7 @@ void setup()
     );
   }
 
-  debugD("starting secondary loop task");
+  debugV("starting secondary loop task");
   TaskHandle_t loopHandle;
   //Allows ArduinoOTA to use system loop
   xTaskCreateUniversal(
@@ -114,7 +112,7 @@ void setup()
       &loopHandle,                 // Task handle
       config::loopTask::core);
 
-  debugD("setting up ota");
+  debugV("setting up ota");
   ota = new Ota(loopHandle);
   ota->setup();
 
@@ -124,6 +122,6 @@ void setup()
 void loop()
 {
   ota->loop();
-  debugLoop();
+  DebugInstance.loop();
   delay(50);
 }

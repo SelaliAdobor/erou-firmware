@@ -10,7 +10,10 @@ namespace config
     const char *const hostname = "erou";
     namespace debug
     {
-        const int bufferSize = 4048;
+        const int bufferSize = 8192;
+        const int wsDebugPort = 81;
+        const int wsTaskStack = 8192;
+        const int wsTaskPriority = 7;
     }
     namespace serial
     {
@@ -19,7 +22,7 @@ namespace config
 
     namespace blinkTask
     {
-        const int stackSize = 500;
+        const int stackSize = 8192;
         const int priority = 1;
         const bool enabled = true;
         const int blinkInterval = 500;

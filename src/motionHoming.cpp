@@ -24,7 +24,7 @@ void Motion::setupHoming()
     xTaskCreate(
         Motion::homingSensorTaskWrapper, // Function that should be called
         "UpdateHallSensorStatus",        // Name of the task (for debugging)
-        1000,                            // Stack size (bytes)
+        4024,                            // Stack size (bytes)
         this,                            // Parameter to pass
         1,                               // Task priority
         &Motion::homingSensorTaskHandle  // Task handle
@@ -33,25 +33,25 @@ void Motion::setupHoming()
 
 void Motion::homingSensorTask()
 {
-    debugD("homing sensor task started");
+    debugV("homing sensor task started");
     for (;;)
     {
-        debugD("homing sensor suspending");
+        debugV("homing sensor suspending");
         //Waits for task notification from ISR
         if (!ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(300000)))
         {
-            debugD("homing sensor task timed out");
+            debugV("homing sensor task timed out");
         }
-        debugD("homing sensor task resumed by isr");
+        debugV("homing sensor task resumed by isr");
 
         bool isTriggered = isHomeSensorTriggered();
 
-        debugD("homing sensor task found sensor state: %d", isTriggered);
+        debugV("homing sensor task found sensor state: %d", isTriggered);
 
         if (onHomeStatusChanged)
         {
             onHomeStatusChanged(isTriggered);
-            debugD("homing sensor task ran onHomeStatusChanged");
+            debugV("homing sensor task ran onHomeStatusChanged");
         }
 
         digitalWrite(pins::onboardLed, isTriggered);
@@ -79,7 +79,7 @@ void IRAM_ATTR Motion::homingSensorIsr()
 
 void Motion::internalHoming(float rpm, bool reverse)
 {
-    debugD("internal homing starting, rpm:%f, reverse:%d", rpm, reverse);
+    debugV("internal homing starting, rpm:%f, reverse:%d", rpm, reverse);
     bool foundHome = false;
     onHomeStatusChanged = [this, &foundHome](bool isHome) mutable
     {
@@ -88,7 +88,7 @@ void Motion::internalHoming(float rpm, bool reverse)
             foundHome = true;
             stepper.startBrake();
             onHomeStatusChanged = nullptr;
-            debugD("internal homing found home");
+            debugV("internal homing found home");
         }
     };
 
@@ -98,14 +98,14 @@ void Motion::internalHoming(float rpm, bool reverse)
     float fullRotation = reverse ? -360 : 360;
     while (!foundHome && millis() - homingStart <= config::motion::maxHomingDurationMs)
     {
-        debugD("internal homing starting rotations");
+        debugV("internal homing starting rotations");
         stepper.rotate(fullRotation);
     }
 }
 
 void Motion::goToHome(bool forceHoming)
 {
-    debugD("motion homing started, forceHoming: %d", forceHoming);
+    debugV("motion homing started, forceHoming: %d", forceHoming);
 
     currentContainer = 0;
     if (!forceHoming)
@@ -113,30 +113,30 @@ void Motion::goToHome(bool forceHoming)
 
         if (isHomeSensorTriggered())
         {
-            debugD("motion homing early exit, was already on home position");
+            debugV("motion homing early exit, was already on home position");
             return;
         }
         stepper.setRPM(config::motion::rpmHomingTravel);
         stepper.rotate(-(currentContainer * config::motion::angleBetweenContainers));
         if (isHomeSensorTriggered())
         {
-            debugD("motion homing early exit, home found after reverse rotation");
+            debugV("motion homing early exit, home found after reverse rotation");
             return;
         }
-        debugD("motion homing continuing instead of early exit");
+        debugV("motion homing continuing instead of early exit");
     }
 
-    debugD("motion homing starting travel");
+    debugV("motion homing starting travel");
     internalHoming(config::motion::rpmHomingTravel, false);
 
-    debugD("motion homing travel completed, delaying for stop");
+    debugV("motion homing travel completed, delaying for stop");
     delay(config::motion::coastingDurationMs); //Allow motor to coast to a stop, avoid the yeet.
 
     setSpeedControl(false);
 
-    debugD("motion homing starting correction");
+    debugV("motion homing starting correction");
     internalHoming(config::motion::rpmHomingCorrection, true);
 
     setSpeedControl(true);
-    debugD("motion homing completed");
+    debugV("motion homing completed");
 }
