@@ -8,6 +8,7 @@
 #include "config.h"
 #include "motion.h"
 #include "ota.h"
+#include <sstream>
 #include "ota_credentials.h"
 #include "debug.h"
 #include "soc/soc.h"
@@ -38,7 +39,7 @@ void runningBlinkTask(void *unused)
 }
 void checkStepperFaultTask(void *unused)
 {
-  debugV("blink task starting");
+  debugV("stepper fault task starting");
   for (;;)
   {
     delay(config::blinkTask::blinkInterval);
@@ -53,24 +54,7 @@ void secondaryLoopTask(void *unused)
 {
   for (;;)
   {
-    debugI("Going home");
-    motion.goToHome(true);
-    delay(1000);
-    debugI("Arrived home");
-    debugI("Disabling driver");
-    driver.disable();
-    debugI("Enabling driver");
-    delay(1000);
-    driver.enable();
-    digitalWrite(pins::stepper::enable, LOW);
-    delay(1000);
-    for (int i = 0; i < 8; i++)
-    {
-      debugI("Going to container %d", i);
-      motion.goToContainerAt(i);
-      debugI("Arrived at container %d", i);
-      delay(5000);
-    }
+    delay(500);
   }
 }
 
@@ -100,12 +84,39 @@ void setup()
   delay(config::startupDelay);
 
   DebugInstance.setup();
-  delay(config::startupDelay);
-  debugI("setting up pins");
-  pins::setup();
+  DebugInstance.registerCommand("en", [](std::stringstream args)
+                                {
+                                  int enabled = 0;
+                                  args >> enabled;
 
-  debugI("setting up motion");
-  motion.setup();
+                                  if (!args.good())
+                                  {
+                                    debugI("Failed to parse command.");
+                                    return;
+                                  }
+                                  digitalWrite(pins::stepper::enable, !enabled);
+                                  debugI("Updated stepper motor enabled state %d", enabled);
+                                });
+
+  DebugInstance.registerCommand("gtc", [](std::stringstream args)
+                                {
+                                  int containerIndex = 0;
+                                  args >> containerIndex;
+
+                                  if (!args.good())
+                                  {
+                                    debugI("Failed to parse command.");
+                                    return;
+                                  }
+                                  debugI("Going to container %d for debug command", containerIndex);
+                                  if (containerIndex >= config::containerCount)
+                                  {
+                                    debugE("Container index exceeded for goToContainer: %d out of %d possible", containerIndex, config::containerCount);
+                                    return;
+                                  }
+                                  motion.goToContainerAt(containerIndex);
+                                  debugI("Went to container %d after debug command", containerIndex);
+                                });
 
   if (config::blinkTask::enabled)
   {
@@ -119,9 +130,16 @@ void setup()
         nullptr                       // Task handle
     );
   }
+
+  delay(config::startupDelay);
+  debugI("setting up pins");
+  pins::setup();
+
+  debugI("setting up motion");
+  motion.setup();
   xTaskCreate(
       checkStepperFaultTask,        // Function that should be called
-      "Blink While Running",        // Name of the task (for debugging)
+      "Stepper Motor Fault Check",  // Name of the task (for debugging)
       config::blinkTask::stackSize, // Stack size (bytes)
       nullptr,                      // Parameter to pass
       config::blinkTask::priority,  // Task priority

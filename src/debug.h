@@ -3,7 +3,7 @@
 #include <list>
 #include "config.h"
 #include <concurrentqueue.h>
-
+#include <sstream>
 #include <WebSocketsServer.h>
 #define FMT_FORMAT_PROVIDE_PRINTF
 #include "fmt/format.h"
@@ -26,18 +26,29 @@ private:
         DebugLevel level;
         std::string content;
     };
+    struct DebugCommand
+    {
+        std::string name;
+        std::function<void(std::stringstream)> run;
+    };
+    TaskHandle_t messageLoopHandle;
     void messageBroadcastTask();
     inline static void messageBroadcastTaskWrapper(void *);
 
+    TaskHandle_t commandLoopHandle;
+    MessageBuffer_t commandBuffer;
+    void commandRunTask();
+    inline static void commandRunTaskWrapper(void *);
+
+    std::vector<DebugCommand> commands;
     moodycamel::ConcurrentQueue<DebugMessage> messageQueue;
     void handleWsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length);
     SemaphoreHandle_t messageAcessSemaphore;
-    TaskHandle_t messageLoopHandle;
     WebSocketsServer webSocket = WebSocketsServer(config::debug::wsDebugPort);
 
 public:
     DebugLevel loggingLevel = DebugLevel::VERBOSE;
-
+    void registerCommand(std::string name, std::function<void(std::stringstream)> run);
     void printMessage(DebugLevel level, fmt::CStringRef format, fmt::ArgList args);
     FMT_VARIADIC(void, printMessage, fmt::CStringRef)
 
