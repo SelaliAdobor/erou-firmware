@@ -2,6 +2,7 @@
 #include "fmt/format.h"
 #include "fmt/printf.h"
 #include <FreeRTOS.h>
+#include <stdlib.h>
 
 Debug DebugInstance = Debug();
 
@@ -16,6 +17,21 @@ Debug::Debug()
         config::debug::wsTaskPriority, // Task priority
         &messageLoopHandle             // Task handle
     );
+    xTaskCreate(
+        commandRunTaskWrapper,          // Function that should be called
+        "Websocket Debug Command Task", // Name of the task (for debugging)
+        config::debug::wsTaskStack,     // Stack size (bytes)
+        this,                           // Parameter to pass
+        config::debug::wsTaskPriority,  // Task priority
+        &commandLoopHandle              // Task handle
+    );
+    registerCommand("level ", [this](std::stringstream args)
+                    {
+                        int newLevel = 0;
+                        args >> newLevel;
+                        loggingLevel = DebugLevel(newLevel);
+                        debugI("Setting log level to %d", loggingLevel);
+                    });
 }
 
 void Debug::printMessage(DebugLevel level, fmt::CStringRef format, fmt::ArgList args)
@@ -28,7 +44,28 @@ void Debug::printMessage(DebugLevel level, fmt::CStringRef format, fmt::ArgList 
     messageQueue.enqueue(message);
     xTaskNotifyGive(messageLoopHandle);
 }
+void Debug::commandRunTask()
+{
+    for (;;)
+    {
+        uint8_t ucRxData[30];
+        size_t xReceivedBytes;
+        xReceivedBytes = xMessageBufferReceive(commandBuffer,
+                                               (void *)ucRxData,
+                                               sizeof(ucRxData),
+                                               portMAX_DELAY);
 
+        if (xReceivedBytes > 0)
+        {
+            std::string commandString(reinterpret_cast<char *>(ucRxData), xReceivedBytes);
+            command.run(std::stringstream(commandString));
+        }
+    }
+}
+void Debug::commandRunTaskWrapper(void *_this)
+{
+    static_cast<Debug *>(_this)->commandRunTask();
+}
 void Debug::messageBroadcastTaskWrapper(void *_this)
 {
     static_cast<Debug *>(_this)->messageBroadcastTask();
@@ -51,9 +88,21 @@ void Debug::messageBroadcastTask()
         }
     }
 }
+bool startsWith(const char *str, const char *pre)
+{
+    return strncmp(pre, str, strlen(pre)) == 0;
+}
+void Debug::registerCommand(std::string name, std::function<void(std::stringstream)> run)
+{
+    DebugCommand newCommand = {name, run};
+    commands.push_back(DebugCommand(newCommand));
+}
+
 void Debug::handleWsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length)
 {
 
+    std::string payloadText;
+    size_t xBytesSent;
     switch (type)
     {
     case WStype_DISCONNECTED:
@@ -68,23 +117,26 @@ void Debug::handleWsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t l
     }
     break;
     case WStype_TEXT:
+        payloadText = std::string((char *)payload);
         Serial.printf("Debug Websocket Client Sent Text: [%u] %s\n", num, payload);
+        for (DebugCommand command : commands)
+        {
+            if (payloadText.rfind(command.name, 0) == 0)
+            {
+                std::string commandString = payloadText.substr(command.name.length());
+                xBytesSent = xMessageBufferSend(commandBuffer,
+                                   (void *)commandString),
+                                   sizeof( commandString ),
+                                   pdMS_TO_TICKS( 100 ));
+                return;
+            }
+            if (xBytesSent != sizeof(commandString))
+            {
+                webSocket.sendTXT(num, fmt::sprintf("Command timed out, may be too large Command: %s", payload).c_str());
+            }
+        }
+        webSocket.sendTXT(num, fmt::sprintf("Unknown Command: %s", payload).c_str());
 
-        //TODO: Improve extensibility
-        if (strcmp((char *)payload, "levelInfo") == 0)
-        {
-            loggingLevel = DebugLevel::INFO;
-            debugI("Setting log level to info");
-        }
-        else if (strcmp((char *)payload, "levelVerbose") == 0)
-        {
-            loggingLevel = DebugLevel::VERBOSE;
-            debugI("Setting log level to verbose");
-        }
-        else
-        {
-            webSocket.sendTXT(num, fmt::sprintf("Unknown Command: %s", payload).c_str());
-        }
         break;
     case WStype_BIN:
         Serial.printf("Debug Websocket Client Sent Binary: [%u] binary length: %u\n", num, length);
