@@ -65,12 +65,15 @@ void Motion::goToContainerAt(const int index)
     debugV("motion going to container homed");
     float scaledRpm = map(index, 0, config::containerCount - 1, config::motion::rpmContainerTravelMin, config::motion::rpmContainerTravelMax);
     float rotation = index * config::motion::angleBetweenContainers;
-
+    if (rotation > 180)
+    {
+        rotation = -1 * (360 - rotation);
+    }
     debugV("motion going to container starting rotation, scaledRpm: %f rotated: %f", scaledRpm, rotation);
 
     setSpeedControl(true);
     stepper.setRPM(scaledRpm);
-    stepper.rotate(index * config::motion::angleBetweenContainers);
+    stepper.rotate(rotation);
 
     debugV("motion going to container finished");
     currentContainer = index;

@@ -117,7 +117,13 @@ void Motion::goToHome(bool forceHoming)
             return;
         }
         stepper.setRPM(config::motion::rpmHomingTravel);
-        stepper.rotate(-(currentContainer * config::motion::angleBetweenContainers));
+        float reversingAngle = -(currentContainer * config::motion::angleBetweenContainers);
+        float reversingAngleAbsolute = abs(reversingAngle);
+        if (reversingAngleAbsolute > 180)
+        {
+            reversingAngle = 360 - reversingAngleAbsolute;
+        }
+        stepper.rotate(reversingAngle);
         if (isHomeSensorTriggered())
         {
             debugI("motion homing early exit, home found after reverse rotation");
@@ -132,7 +138,8 @@ void Motion::goToHome(bool forceHoming)
     debugV("motion homing travel completed, delaying for stop");
     delay(config::motion::coastingDurationMs); //Allow motor to coast to a stop, avoid the yeet.
 
-    setSpeedControl(false);
+    stepper.setRPM(config::motion::rpmHomingTravel);
+    stepper.rotate(config::motion::homingCorrectionOvershoot);
 
     debugV("motion homing starting correction");
     internalHoming(config::motion::rpmHomingCorrection, true);

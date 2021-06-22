@@ -41,19 +41,23 @@ namespace config
     {
         const int stepsPerRotation = 200;
         const int microsteps = 32;
-        const int acceleration = 1000;
-        const int deceleration = 1000;
+        const int acceleration = 300;
+        const int deceleration = 1100;
     }
 
     namespace motion
     {
-        const int coastingDurationMs = 200;
+        const int coastingDurationMs = 100;
         const int maxHomingDurationMs = 1 * 60 * 1000;
 
-        const float rpmHomingCorrection = 10;
-        const float rpmHomingTravel = 35;
-        const float rpmContainerTravelMin = 20;
-        const float rpmContainerTravelMax = 35;
+        //During homing, after intial approach, overshoot by this much then slowly return to home
+        //Needs to be an angle enough large enough to leave home position
+        const float homingCorrectionOvershoot = 45;
+
+        const float rpmHomingCorrection = 20;
+        const float rpmHomingTravel = 40;
+        const float rpmContainerTravelMin = 30;
+        const float rpmContainerTravelMax = 40;
 
         const float angleBetweenContainers = 360.0 / containerCount;
     }
