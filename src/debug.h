@@ -2,13 +2,14 @@
 
 #include <list>
 #include "config.h"
+#include <concurrentqueue.h>
 
 #include <WebSocketsServer.h>
 #define FMT_FORMAT_PROVIDE_PRINTF
 #include "fmt/format.h"
-#define debugV(fmt, ...) DebugInstance.printV("(%s)(C%d) " fmt, __func__, xPortGetCoreID(), ##__VA_ARGS__)
-#define debugI(fmt, ...) DebugInstance.printI("(%s)(C%d) " fmt, __func__, xPortGetCoreID(), ##__VA_ARGS__)
-#define debugE(fmt, ...) DebugInstance.printE("(%s)(C%d) " fmt, __func__, xPortGetCoreID(), ##__VA_ARGS__)
+#define debugV(fmt, ...) DebugInstance.printV("(%s)(%s)(C%d) " fmt, __FILE__, __func__, xPortGetCoreID(), ##__VA_ARGS__)
+#define debugI(fmt, ...) DebugInstance.printI("\033[1;32m(%s)(%s)(C%d) \033[1;0m" fmt, __FILE__, __func__, xPortGetCoreID(), ##__VA_ARGS__)
+#define debugE(fmt, ...) DebugInstance.printE("\033[1;31m(%s)(%s)(C%d) \033[1;0m" fmt, __FILE__, __func__, xPortGetCoreID(), ##__VA_ARGS__)
 
 enum DebugLevel
 {
@@ -28,8 +29,7 @@ private:
     void messageBroadcastTask();
     inline static void messageBroadcastTaskWrapper(void *);
 
-    int maxMessageCount = 1000;
-    std::list<DebugMessage> messages;
+    moodycamel::ConcurrentQueue<DebugMessage> messageQueue;
     void handleWsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length);
     SemaphoreHandle_t messageAcessSemaphore;
     TaskHandle_t messageLoopHandle;

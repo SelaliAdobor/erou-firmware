@@ -36,21 +36,41 @@ void runningBlinkTask(void *unused)
     delay(config::blinkTask::blinkInterval);
   }
 }
+void checkStepperFaultTask(void *unused)
+{
+  debugV("blink task starting");
+  for (;;)
+  {
+    delay(config::blinkTask::blinkInterval);
+    if (digitalRead(pins::stepper::fault) == LOW)
+    {
+      debugE("stepper motor drive fault detected!");
+    }
+  }
+}
 
 void secondaryLoopTask(void *unused)
 {
   for (;;)
   {
+    debugI("Going home");
     motion.goToHome(true);
+    delay(1000);
+    debugI("Arrived home");
+    debugI("Disabling driver");
+    driver.disable();
+    debugI("Enabling driver");
+    delay(1000);
+    driver.enable();
+    digitalWrite(pins::stepper::enable, LOW);
     delay(1000);
     for (int i = 0; i < 8; i++)
     {
+      debugI("Going to container %d", i);
       motion.goToContainerAt(i);
-      delay(1000);
+      debugI("Arrived at container %d", i);
+      delay(5000);
     }
-    driver.disable();
-    delay(6000);
-    driver.enable();
   }
 }
 
@@ -71,7 +91,7 @@ void setupWifi()
     ESP.restart();
   }
 }
-  
+
 void setup()
 {
   setupWifi();
@@ -80,16 +100,16 @@ void setup()
   delay(config::startupDelay);
 
   DebugInstance.setup();
-
-  debugV("setting up pins");
+  delay(config::startupDelay);
+  debugI("setting up pins");
   pins::setup();
 
-  debugV("setting up motions");
+  debugI("setting up motion");
   motion.setup();
 
   if (config::blinkTask::enabled)
   {
-    debugV("setting up blink");
+    debugI("setting up blink");
     xTaskCreate(
         runningBlinkTask,             // Function that should be called
         "Blink While Running",        // Name of the task (for debugging)
@@ -99,8 +119,16 @@ void setup()
         nullptr                       // Task handle
     );
   }
+  xTaskCreate(
+      checkStepperFaultTask,        // Function that should be called
+      "Blink While Running",        // Name of the task (for debugging)
+      config::blinkTask::stackSize, // Stack size (bytes)
+      nullptr,                      // Parameter to pass
+      config::blinkTask::priority,  // Task priority
+      nullptr                       // Task handle
+  );
 
-  debugV("starting secondary loop task");
+  debugI("starting secondary loop task");
   TaskHandle_t loopHandle;
   //Allows ArduinoOTA to use system loop
   xTaskCreateUniversal(
@@ -112,7 +140,7 @@ void setup()
       &loopHandle,                 // Task handle
       config::loopTask::core);
 
-  debugV("setting up ota");
+  debugI("setting up ota");
   ota = new Ota(loopHandle);
   ota->setup();
 

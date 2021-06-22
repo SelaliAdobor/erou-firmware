@@ -14,6 +14,8 @@ namespace config
         const int wsDebugPort = 81;
         const int wsTaskStack = 8192;
         const int wsTaskPriority = 7;
+        const int maxMessageCount = 1000;
+        const int maxMessageTimeoutMicros = 1000;
     }
     namespace serial
     {
@@ -50,7 +52,7 @@ namespace config
 
         const float rpmHomingCorrection = 10;
         const float rpmHomingTravel = 35;
-        const float rpmContainerTravelMin = 10;
+        const float rpmContainerTravelMin = 20;
         const float rpmContainerTravelMax = 35;
 
         const float angleBetweenContainers = 360.0 / containerCount;

@@ -25,15 +25,7 @@ void Debug::printMessage(DebugLevel level, fmt::CStringRef format, fmt::ArgList 
     message.content = formattedString;
     message.level = level;
 
-    if (xSemaphoreTake(messageAcessSemaphore, pdMS_TO_TICKS(10)) == pdTRUE)
-    {
-        if (messages.size() > maxMessageCount)
-        {
-            messages.pop_back();
-        }
-        messages.push_front(message);
-        xSemaphoreGive(messageAcessSemaphore);
-    }
+    messageQueue.enqueue(message);
     xTaskNotifyGive(messageLoopHandle);
 }
 
@@ -47,21 +39,14 @@ void Debug::messageBroadcastTask()
     for (;;)
     {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-        if (xSemaphoreTake(messageAcessSemaphore, portMAX_DELAY) == pdTRUE)
+
+        DebugMessage message;
+        while (messageQueue.try_dequeue(message))
         {
-            std::list<DebugMessage> unsentMessages(messages);
-
-            messages.clear();
-
-            xSemaphoreGive(messageAcessSemaphore);
-
-            for (DebugMessage message : messages)
+            if (message.level >= loggingLevel)
             {
-                if (message.level >= loggingLevel)
-                {
-                    webSocket.broadcastTXT(message.content.c_str());
-                    Serial.println(message.content.c_str());
-                }
+                webSocket.broadcastTXT(message.content.c_str());
+                Serial.println(message.content.c_str());
             }
         }
     }
@@ -84,6 +69,22 @@ void Debug::handleWsEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t l
     break;
     case WStype_TEXT:
         Serial.printf("Debug Websocket Client Sent Text: [%u] %s\n", num, payload);
+
+        //TODO: Improve extensibility
+        if (strcmp((char *)payload, "levelInfo") == 0)
+        {
+            loggingLevel = DebugLevel::INFO;
+            debugI("Setting log level to info");
+        }
+        else if (strcmp((char *)payload, "levelVerbose") == 0)
+        {
+            loggingLevel = DebugLevel::VERBOSE;
+            debugI("Setting log level to verbose");
+        }
+        else
+        {
+            webSocket.sendTXT(num, fmt::sprintf("Unknown Command: %s", payload).c_str());
+        }
         break;
     case WStype_BIN:
         Serial.printf("Debug Websocket Client Sent Binary: [%u] binary length: %u\n", num, length);
