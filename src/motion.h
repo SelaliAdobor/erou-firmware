@@ -3,32 +3,32 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
-#include "BasicStepperDriver.h"
 #include <functional>
 
-class Motion
-{
-private:
-    BasicStepperDriver stepper;
-    std::function<void(bool)> onHomeStatusChanged = nullptr;
-    int currentContainer = 0;
+#include "BasicStepperDriver.h"
 
-    void setSpeedControl(bool enabled);
+class Motion {
+ private:
+  BasicStepperDriver stepper;
+  std::function<void(bool)> onHomeStatusChanged = nullptr;
+  int currentContainer = 0;
 
-    void setupHoming();
-    bool isHomeSensorTriggered();
-    void homingSensorTask();
-    void internalHoming(float rpm, bool reverse);
+  void setSpeedControl(bool enabled);
 
-    static TaskHandle_t homingSensorTaskHandle;
-    inline static void homingSensorTaskWrapper(void *);
+  void setupHoming();
+  bool isHomeSensorTriggered();
+  void homingSensorTask();
+  void internalHoming(float rpm, bool reverse);
 
-    static void homingSensorIsr();
+  static TaskHandle_t homingSensorTaskHandle;
+  inline static void homingSensorTaskWrapper(void *);
 
-public:
-    Motion(BasicStepperDriver stepper);
+  static void homingSensorIsr();
 
-    void setup();
-    void goToHome(bool forceHoming);
-    void goToContainerAt(int index);
+ public:
+  Motion(BasicStepperDriver stepper);
+
+  void setup();
+  void goToHome(bool forceHoming);
+  void goToContainerAt(int index);
 };
