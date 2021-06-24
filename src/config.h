@@ -36,7 +36,7 @@ namespace stepper {
 const int stepsPerRotation = 200;
 const int microsteps = 32;
 const int acceleration = 300;
-const int deceleration = 1100;
+const int deceleration = 600;
 }  // namespace stepper
 
 namespace motion {

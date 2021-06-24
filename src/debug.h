@@ -1,5 +1,4 @@
 #pragma once
-
 #include <WebSocketsServer.h>
 #include <concurrentqueue.h>
 #include <freertos/FreeRTOS.h>
@@ -8,6 +7,8 @@
 
 #include <list>
 #include <sstream>
+#include <string>
+#include <vector>
 
 #include "config.h"
 #define FMT_FORMAT_PROVIDE_PRINTF

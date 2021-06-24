@@ -86,11 +86,8 @@ void Debug::handleWsEvent(uint8_t num, WStype_t type, uint8_t *payload,
                     payload);
       for (DebugCommand command : commands) {
         if (payloadText.rfind(command.name, 0) == 0) {
-          std::thread commandThread([&] {  //
-            command.run(
-                std::stringstream(payloadText.substr(command.name.length())));
-          });
-          commandThread.detach();
+          command.run(
+              std::stringstream(payloadText.substr(command.name.length())));
           return;
         }
       }
