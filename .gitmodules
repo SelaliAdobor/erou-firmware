@@ -1,0 +1,33 @@
+[submodule "lib/TMCStepper"]
+	path = lib/TMCStepper
+	url = https://github.com/teemuatlut/TMCStepper.git
+[submodule "lib/AccelStepper"]
+	path = lib/AccelStepper
+	url = https://github.com/waspinator/AccelStepper.git
+[submodule "lib/StepperDriver"]
+	path = lib/StepperDriver
+	url = https://github.com/laurb9/StepperDriver.git
+[submodule "RemoteDebug"]
+	path = RemoteDebug
+	url = https://github.com/JoaoLopesF/RemoteDebug.git
+[submodule "RemoteDebugger"]
+	path = RemoteDebugger
+	url = https://github.com/JoaoLopesF/RemoteDebugger.git
+[submodule "lib/RemoteDebug"]
+	path = lib/RemoteDebug
+	url = https://github.com/JoaoLopesF/RemoteDebug
+[submodule "lib/fmt"]
+	path = lib/fmt
+	url = https://github.com/fmtlib/fmt.git
+[submodule "lib/arduinoWebSockets"]
+	path = lib/arduinoWebSockets
+	url = https://github.com/Links2004/arduinoWebSockets.git
+[submodule "lib/ESPAsyncWebServer"]
+	path = lib/ESPAsyncWebServer
+	url = https://github.com/me-no-dev/ESPAsyncWebServer.git
+[submodule "lib/AsyncTCP"]
+	path = lib/AsyncTCP
+	url = https://github.com/me-no-dev/AsyncTCP.git
+[submodule "lib/MPMCQueue"]
+	path = lib/MPMCQueue
+	url = https://github.com/rigtorp/MPMCQueue.git
