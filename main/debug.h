@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "config.h"
+
 #define FMT_FORMAT_PROVIDE_PRINTF
 #include "fmt/format.h"
 #define debugV(fmt, ...)                                         \
@@ -39,7 +40,7 @@ class Debug {
     std::string name;
     std::function<void(std::stringstream)> run;
   };
-  TaskHandle_t messageLoopHandle;
+  TaskHandle_t messageLoopHandle{};
   void messageBroadcastTask();
   inline static void messageBroadcastTaskWrapper(void *);
 

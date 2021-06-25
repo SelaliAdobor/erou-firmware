@@ -1,12 +1,12 @@
 #include "debug.h"
 
 #include <freertos/FreeRTOS.h>
-#include <stdlib.h>
 
 #include "fmt/format.h"
 #include "fmt/printf.h"
 
 Debug DebugInstance = Debug();
+
 
 Debug::Debug() {
   messageAcessSemaphore = xSemaphoreCreateMutex();

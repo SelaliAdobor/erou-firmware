@@ -24,7 +24,7 @@ DRV8825 driver(config::stepper::stepsPerRotation, pins::stepper::direction,
 Ota *ota;
 Motion motion = Motion(driver);
 
-void __attribute__((noreturn)) runningBlinkTask(void *unused) {
+void  runningBlinkTask(void *unused) {
   debugV("blink task starting");
   for (;;) {
     // digitalWrite(pins::onboardLed, HIGH);

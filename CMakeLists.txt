@@ -3,4 +3,16 @@
 cmake_minimum_required(VERSION 3.5)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+
+set (CMAKE_CXX_STANDARD 11)
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
+ADD_CUSTOM_COMMAND(
+        OUTPUT ./components/external-libraries/CMakeLists.txt
+        COMMAND "python generate_library_cmake.py"
+        DEPENDS ./components/external-libraries
+)
+
+idf_build_set_property(COMPILE_OPTIONS "-std=c++11" APPEND)
+
 project(erou-firmware-esp32)
