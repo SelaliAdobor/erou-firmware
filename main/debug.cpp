@@ -104,9 +104,8 @@ void Debug::handleWsEvent(AsyncWebSocket *,
     case WS_EVT_DATA:info = static_cast<AwsFrameInfo *>(arg);
 
       if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
-        payloadText = std::string(reinterpret_cast<char *>(payload));
-        Serial.printf("Debug Websocket Client Sent Text: [%u] %s\n", client->id(),
-                      payload);
+        payloadText = std::string(reinterpret_cast<char *>(payload), info->len);
+
         for (const DebugCommand &command : commands) {
           if (payloadText.rfind(command.name, 0) == 0) {
             client->text("Matched Command!");
