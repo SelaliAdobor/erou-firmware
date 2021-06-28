@@ -1,18 +1,17 @@
-#include "motion.h"
 
-#include <Arduino.h>
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
+#include <utility>
 
-#include <functional>
-#include <limits>
-
+#include "Arduino.h"
+#include "freertos/task.h"
 #include "DRV8825.h"
-#include "config.h"
+
+#include "config_constants.h"
+#include "motion.h"
 #include "debug.h"
 #include "pins.h"
+#include "math_util.h"
 
-Motion::Motion(BasicStepperDriver step) : stepper(step) {}
+Motion::Motion(BasicStepperDriver step) : stepper(std::move(step)) {}
 
 void setupStepperPins() {
   digitalWrite(pins::stepper::enable, LOW);
@@ -56,12 +55,14 @@ void Motion::goToContainerAt(const int index) {
   debugV("motion going to container, index %d", index);
 
   debugV("motion going to container starting homing");
+
   goToHome(false);
+
   debugV("motion going to container homed");
-  float scaledRpm = map(index, 0, config::containerCount - 1,
-                        config::motion::rpmContainerTravelMin,
-                        config::motion::rpmContainerTravelMax);
-  float rotation = index * config::motion::angleBetweenContainers;
+  float scaledRpm = mapFloat(static_cast<float>(index), 0, config::physical::containerCount - 1,
+                             config::motion::rpmContainerTravelMin,
+                             config::motion::rpmContainerTravelMax);
+  float rotation = static_cast<float>(index) * config::motion::angleBetweenContainers;
   if (rotation > 180) {
     rotation = -1 * (360 - rotation);
   }

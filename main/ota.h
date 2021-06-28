@@ -9,11 +9,8 @@
 
 class Ota {
  private:
-  TaskHandle_t secondaryLoopHandle;
+  [[noreturn]]  static void otaTask(void *);
 
  public:
-  Ota(TaskHandle_t handle);
-
-  void setup();
-  void loop();
+  static void setup();
 };

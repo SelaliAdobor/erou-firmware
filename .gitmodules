@@ -7,9 +7,6 @@
 [submodule "components/external-libraries/StepperDriver"]
 	path = components/external-libraries/StepperDriver
 	url = https://github.com/laurb9/StepperDriver.git
-[submodule "components/external-libraries/ESPAsyncWebServer"]
-	path = components/external-libraries/ESPAsyncWebServer
-	url = https://github.com/me-no-dev/ESPAsyncWebServer.git
 [submodule "components/external-libraries/AsyncTCP"]
 	path = components/external-libraries/AsyncTCP
 	url = https://github.com/me-no-dev/AsyncTCP.git
@@ -22,3 +19,12 @@
 [submodule "components/external-libraries/fmt-esp32"]
 	path = components/external-libraries/fmt-esp32
 	url = git@github.com:SelaliAdobor/fmt-esp32.git
+[submodule "components/external-libraries/arduinoWebSockets"]
+	path = components/external-libraries/arduinoWebSockets
+	url = git@github.com:Links2004/arduinoWebSockets.git
+[submodule "components/arduino"]
+	path = components/arduino
+	url = git@github.com:espressif/arduino-esp32.git
+[submodule "components/external-libraries/ESPAsyncWebServer"]
+	path = components/external-libraries/ESPAsyncWebServer
+	url = git@github.com:yubox-node-org/ESPAsyncWebServer.git

@@ -1,37 +1,42 @@
-#pragma once
+#ifndef CONFIG_CONSTANTS_H
+#define CONFIG_CONSTANTS_H
 
 namespace config {
 
-const long startupDelay = 5000L;
+const int64_t startupDelay = 5000L;
+
+namespace physical {
 // Includes the skipped empty slot
 const int containerCount = 8;
-
+}
+namespace network {
 const char *const hostname = "erou";
+const int port = 80;
+}
 
-const int webserverPort = 80;
 namespace debug {
 const int bufferSize = 8192;
 const int wsTaskStack = 8192;
 const int wsTaskPriority = 7;
-const int maxMessageCount = 1000;
-const int maxMessageTimeoutMicros = 1000;
+const char *const wsDebugEndpoint = "/debug";
 }  // namespace debug
+
 namespace serial {
-const long serialBaud = 115200;
+const int64_t baud = 115200;
 }
 
 namespace blinkTask {
 const int stackSize = 8192;
 const int priority = 1;
-const bool enabled = true;
+constexpr bool enabled = true;
 const int blinkInterval = 500;
-}  // namespace blinkTask
+}  // namespace blink_task
 
 namespace loopTask {
 const int stackSize = 8192;
 const int priority = 1;
 const int core = 1;
-}  // namespace loopTask
+}  // namespace blink_task
 
 namespace stepper {
 const int stepsPerRotation = 200;
@@ -44,7 +49,7 @@ namespace motion {
 const int coastingDurationMs = 100;
 const int maxHomingDurationMs = 1 * 60 * 1000;
 
-// During homing, after intial approach, overshoot by this much then slowly
+// During homing, after initial approach, overshoot by this much then slowly
 // return to home Needs to be an angle enough large enough to leave home
 // position
 const float homingCorrectionOvershoot = 45;
@@ -54,6 +59,9 @@ const float rpmHomingTravel = 40;
 const float rpmContainerTravelMin = 30;
 const float rpmContainerTravelMax = 40;
 
-const float angleBetweenContainers = 360.0 / containerCount;
+const float angleBetweenContainers = 360.0 / physical::containerCount;
 }  // namespace motion
 }  // namespace config
+
+
+#endif // CONFIG_CONSTANTS_H

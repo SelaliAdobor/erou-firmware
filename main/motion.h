@@ -17,7 +17,7 @@ class Motion {
 
   void setupHoming();
   bool isHomeSensorTriggered();
-  void homingSensorTask();
+  [[noreturn]] void homingSensorTask();
   void internalHoming(float rpm, bool reverse);
 
   static TaskHandle_t homingSensorTaskHandle;
@@ -26,7 +26,7 @@ class Motion {
   static void homingSensorIsr();
 
  public:
-  Motion(BasicStepperDriver stepper);
+  explicit Motion(BasicStepperDriver stepper);
 
   void setup();
   void goToHome(bool forceHoming);

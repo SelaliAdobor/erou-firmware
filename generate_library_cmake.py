@@ -10,11 +10,13 @@ srcExclusions = []
 includeDirs = ["fmt-esp32"]
 includeExclusions = ["fmt-esp32/fmt"]
 
-for ext in ('*.cpp', '*.c', '*.cc', '*.cxx'):
-    srcFiles.extend(map(lambda path: os.path.relpath(path, libDir), glob(join(f'{libDir}/**/**', ext))))
+print(f'{libDir}/**')
+
+for ext in ('*.c', '*.cpp', '*.cc', '*.cxx'):
+    srcFiles.extend(map(lambda path: os.path.relpath(path, libDir), glob(join(f'{libDir}/**/*', ext), recursive = True)))
 
 for ext in ('*.h', '*.hpp'):
-    includeDirs.extend(map(lambda path: os.path.relpath(os.path.dirname(path), libDir), glob(join(f'{libDir}/**/**', ext))))
+    includeDirs.extend(map(lambda path: os.path.relpath(os.path.dirname(path), libDir), glob(join(f'{libDir}/**/*', ext), recursive = True)))
 
 includeDirs = (list(set(includeDirs)))
 
@@ -32,6 +34,8 @@ cmakeContent += f'  SRCS {srcFilesFormatted}\n'
 cmakeContent += f'  INCLUDE_DIRS {includeDirsFormatted}\n'
 cmakeContent += f'  REQUIRES arduino\n'
 cmakeContent += f')'
+cmakeContent += "\n"
+cmakeContent += "set_target_properties(${COMPONENT_TARGET} PROPERTIES LINK_INTERFACE_MULTIPLICITY 3)"
 print(cmakeContent)
 
 cmakeFilePath = os.path.join(libDir, "CMakeLists.txt")

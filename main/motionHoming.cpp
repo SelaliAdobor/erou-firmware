@@ -6,7 +6,7 @@
 #include <limits>
 
 #include "DRV8825.h"
-#include "config.h"
+#include "config_constants.h"
 #include "debug.h"
 #include "motion.h"
 #include "pins.h"
@@ -16,7 +16,6 @@ TaskHandle_t Motion::homingSensorTaskHandle = nullptr;
 void Motion::homingSensorTaskWrapper(void *_this) {
   static_cast<Motion *>(_this)->homingSensorTask();
 }
-
 
 void Motion::setupHoming() {
   pinMode(pins::sensors::homingHallEffect, INPUT);
@@ -33,7 +32,7 @@ void Motion::setupHoming() {
   );
 }
 
-void Motion::homingSensorTask() {
+[[noreturn]] void Motion::homingSensorTask() {
   debugV("homing sensor task started");
   for (;;) {
     // Waits for task notification from ISR
@@ -84,7 +83,7 @@ void Motion::internalHoming(float rpm, bool reverse) {
   unsigned long homingStart = millis();
   float fullRotation = reverse ? -360 : 360;
   while (!foundHome &&
-         millis() - homingStart <= config::motion::maxHomingDurationMs) {
+      millis() - homingStart <= config::motion::maxHomingDurationMs) {
     debugV("internal homing starting rotations");
     stepper.rotate(fullRotation);
   }
@@ -122,7 +121,7 @@ void Motion::goToHome(bool forceHoming) {
 
   debugV("motion homing travel completed, delaying for stop");
   delay(config::motion::coastingDurationMs);  // Allow motor to coast to a stop,
-                                              // avoid the yeet.
+  // avoid the yeet.
 
   stepper.setRPM(config::motion::rpmHomingTravel);
   stepper.rotate(config::motion::homingCorrectionOvershoot);
