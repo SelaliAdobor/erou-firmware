@@ -36,7 +36,6 @@ TMC2208Stepper::TMC2208Stepper(Stream * SerialPort, float RS, uint8_t addr, uint
 		if (SWSerial != nullptr)
 		{
 			SWSerial->begin(baudrate);
-			SWSerial->end();
 		}
 		#if defined(ARDUINO_ARCH_AVR)
 			if (RXTX_pin > 0) {
@@ -171,7 +170,20 @@ uint8_t TMC2208Stepper::serial_write(const uint8_t data) {
 
 	return out;
 }
+__attribute__((weak))
+uint8_t TMC2208Stepper::serial_write(const char* data, const int length) {
+  int out = 0;;
+#if SW_CAPABLE_PLATFORM
+  if (SWSerial != nullptr) {
+    return SWSerial->write(data, length);
+  } else
+#endif
+  if (HWSerial != nullptr) {
+    return HWSerial->write(data, length);
+  }
 
+  return out;
+}
 __attribute__((weak))
 void TMC2208Stepper::postWriteCommunication() {}
 
@@ -179,7 +191,7 @@ __attribute__((weak))
 void TMC2208Stepper::postReadCommunication() {
 	#if SW_CAPABLE_PLATFORM
 		if (SWSerial != nullptr) {
-			SWSerial->end();
+			//SWSerial->end();
 		}
 	#endif
 }
@@ -193,9 +205,7 @@ void TMC2208Stepper::write(uint8_t addr, uint32_t regVal) {
 
 	preWriteCommunication();
 
-	for(uint8_t i=0; i<=len; i++) {
-		bytesWritten += serial_write(datagram[i]);
-	}
+  bytesWritten +=  serial_write(reinterpret_cast<const char *>(&datagram), len);
 	postWriteCommunication();
 
 	delay(replyDelay);
@@ -211,8 +221,7 @@ uint64_t TMC2208Stepper::_sendDatagram(uint8_t datagram[], const uint8_t len, ui
 		}
 	#endif
 
-	for(int i=0; i<=len; i++) serial_write(datagram[i]);
-
+    serial_write(reinterpret_cast<const char *>(&datagram), len);
 	#if defined(ARDUINO_ARCH_AVR)
 		if (RXTX_pin > 0) {
 			pinMode(RXTX_pin, INPUT_PULLUP);

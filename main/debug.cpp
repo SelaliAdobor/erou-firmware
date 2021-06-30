@@ -1,5 +1,5 @@
 #include "debug.h"
-
+#include <deque>
 #include <freertos/FreeRTOS.h>
 
 #include "fmt/format.h"
@@ -15,6 +15,7 @@ void Debug::setup(AsyncWebServer &server) {
                                            (If someone redefines _X they deserve the clash.)*/
   ws.onEvent(std::bind(&Debug::handleWsEvent,
                        this, std::placeholders::_1, _2, _3, _4, _5, _6));
+
 }
 
 Debug::Debug() {
@@ -26,7 +27,13 @@ Debug::Debug() {
               config::debug::wsTaskPriority,
               &messageLoopHandle
   );
-
+  xTaskCreate(commandRunnerTaskWrapper,
+              "Command Runner Debug Task",
+              config::debug::wsTaskStack,
+              this,
+              config::debug::wsTaskPriority,
+              &commandRunnerHandle
+  );
   registerCommand("level ", [this](const std::string *args) {
     int newLevel = 0;
     if (sscanf(args->c_str(), "%d", &newLevel) != 1) {
@@ -49,18 +56,47 @@ void Debug::printMessage(DebugLevel level, fmt::CStringRef format,
   xTaskNotifyGive(messageLoopHandle);
 }
 
+void Debug::commandRunnerTaskWrapper(void *_this) {
+  static_cast<Debug *>(_this)->commandRunnerTask();
+}
+
+[[noreturn]] void Debug::commandRunnerTask()  {
+  for (;;) {
+    ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(2000));
+    std::string commandString;
+    while (commandQueue.try_dequeue(commandString)) {
+      bool commandRan = false;
+      for (const DebugCommand &command : commands) {
+        if (commandString.rfind(command.name, 0) != 0){
+          continue; //Command didn't match
+        }
+
+        const std::string args = commandString.substr(command.name.length());
+        debugI("Matched Command with: %s", args);
+        command.run(&args);
+        commandRan = true;
+        break;
+      }
+      if(!commandRan){
+        debugE("Unknown Command: %s", commandString);
+      }
+    }
+  }
+}
 void Debug::messageBroadcastTaskWrapper(void *_this) {
   static_cast<Debug *>(_this)->messageBroadcastTask();
 }
 
 [[noreturn]] void Debug::messageBroadcastTask() {
   for (;;) {
-    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-    if (ws.getClients().isEmpty()) {
+    ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(2000));
+    //Allow 15 seconds for debug connection before broadcasting regardless of WS connection
+    if(ws.getClients().empty() && (millis() < 15000)){
       continue;
     }
     DebugMessage message;
     while (messageQueue.try_dequeue(message)) {
+      Serial.println(message.content.c_str());
       if (message.level >= loggingLevel) {
         ws.textAll(message.content.c_str(), message.content.length());
         Serial.println(message.content.c_str());
@@ -105,17 +141,8 @@ void Debug::handleWsEvent(AsyncWebSocket *,
 
       if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
         payloadText = std::string(reinterpret_cast<char *>(payload), info->len);
-
-        for (const DebugCommand &command : commands) {
-          if (payloadText.rfind(command.name, 0) == 0) {
-            client->text("Matched Command!");
-
-            const std::string args = std::string(payloadText.substr(command.name.length()));
-            command.run(&args);
-            return;
-          }
-        }
-        client->text(fmt::sprintf("Unknown Command: %s", payloadText).c_str());
+        commandQueue.try_enqueue(payloadText);
+        xTaskNotifyGive(commandRunnerHandle);
       }
 
       break;

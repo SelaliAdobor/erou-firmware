@@ -27,4 +27,13 @@
 	url = git@github.com:espressif/arduino-esp32.git
 [submodule "components/external-libraries/ESPAsyncWebServer"]
 	path = components/external-libraries/ESPAsyncWebServer
-	url = git@github.com:yubox-node-org/ESPAsyncWebServer.git
+	url = git@github.com:SelaliAdobor/ESPAsyncWebServer.git
+[submodule "components/external-libraries/FlexyStepper"]
+	path = components/external-libraries/FlexyStepper
+	url = git@github.com:Stan-Reifel/FlexyStepper.git
+[submodule "components/external-libraries/espsoftwareserial"]
+	path = components/external-libraries/espsoftwareserial
+	url = git@github.com:plerup/espsoftwareserial.git
+[submodule "components/external-libraries/ESP-FlexyStepper"]
+	path = components/external-libraries/ESP-FlexyStepper
+	url = git@github.com:pkerspe/ESP-FlexyStepper.git

@@ -15,14 +15,14 @@ void Ota::setup() {
         }
       })
       .onEnd([]() {
-        debugI("\nEnd");
+        debugI("\n\nEnd");
       })
       .onProgress([](unsigned int progress, unsigned int total) {
         // I don't like how it formats otherwise
-        debugI("Progress: %u%%\r", (progress / (total / 100)));
+        debugI("Progress: %u%%\r\033[1A'", (progress / (total / 100)));
       })
       .onError([](ota_error_t error) {
-        debugI("Error[%u]: ", error);
+        debugI("\n\nError[%u]: %s ", error, Update.errorString());
         switch (error) {
           case OTA_AUTH_ERROR: debugI("Auth Failed");
             break;

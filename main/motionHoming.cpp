@@ -52,7 +52,7 @@ void Motion::setupHoming() {
 }
 
 bool Motion::isHomeSensorTriggered() {
-  return !digitalRead(pins::sensors::homingHallEffect);
+  return digitalRead(pins::sensors::homingHallEffect) == 0;
 }
 
 void IRAM_ATTR Motion::homingSensorIsr() {
@@ -72,20 +72,21 @@ void Motion::internalHoming(float rpm, bool reverse) {
   onHomeStatusChanged = [this, &foundHome](bool isHome) mutable {
     if (isHome) {
       foundHome = true;
-      stepper.startBrake();
+      stepper->setTargetPositionToStop();
+      while (!stepper->processMovement());
       onHomeStatusChanged = nullptr;
       debugV("internal homing found home");
     }
   };
 
-  stepper.setRPM(rpm);
+  stepper->setSpeedInStepsPerSecond(rpmToSps(rpm));
 
-  unsigned long homingStart = millis();
+  uint32_t homingStart = millis();
   float fullRotation = reverse ? -360 : 360;
   while (!foundHome &&
       millis() - homingStart <= config::motion::maxHomingDurationMs) {
     debugV("internal homing starting rotations");
-    stepper.rotate(fullRotation);
+    stepper->moveRelativeInRevolutions(degToRev(fullRotation));
   }
 
   if (!foundHome) {
@@ -101,14 +102,14 @@ void Motion::goToHome(bool forceHoming) {
       debugI("motion homing early exit, was already on home position");
       return;
     }
-    stepper.setRPM(config::motion::rpmHomingTravel);
+    stepper->setSpeedInStepsPerSecond(rpmToSps(config::motion::rpmHomingCorrection));
     float reversingAngle =
-        -(currentContainer * config::motion::angleBetweenContainers);
+        -(static_cast<float>(currentContainer) * config::motion::angleBetweenContainers);
     float reversingAngleAbsolute = abs(reversingAngle);
     if (reversingAngleAbsolute > 180) {
       reversingAngle = 360 - reversingAngleAbsolute;
     }
-    stepper.rotate(reversingAngle);
+    stepper->moveRelativeInRevolutions(reversingAngle/360.0F);
     if (isHomeSensorTriggered()) {
       debugI("motion homing early exit, home found after reverse rotation");
       return;
@@ -122,9 +123,8 @@ void Motion::goToHome(bool forceHoming) {
   debugV("motion homing travel completed, delaying for stop");
   delay(config::motion::coastingDurationMs);  // Allow motor to coast to a stop,
   // avoid the yeet.
-
-  stepper.setRPM(config::motion::rpmHomingTravel);
-  stepper.rotate(config::motion::homingCorrectionOvershoot);
+  stepper->setSpeedInStepsPerSecond(rpmToSps(config::motion::rpmHomingCorrection));
+  stepper->moveRelativeInRevolutions(degToRev(config::motion::homingCorrectionOvershoot));
 
   debugV("motion homing starting correction");
   internalHoming(config::motion::rpmHomingCorrection, true);

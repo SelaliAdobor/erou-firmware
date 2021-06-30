@@ -1,13 +1,8 @@
 #include <functional>
-#include <limits>
-#include <sstream>
-#include <new>
 
 #include "Arduino.h"
 #include "freertos/task.h"
-#include "freertos/FreeRTOS.h"
 #include "ESPAsyncWebServer.h"
-#include "DRV8825.h"
 #include "config_constants.h"
 #include "debug.h"
 #include "esp32-hal.h"
@@ -17,12 +12,13 @@
 #include "ota_credentials.h"
 #include "pins.h"
 
-DRV8825 driver(config::stepper::stepsPerRotation, pins::stepper::direction,
-               pins::stepper::step, pins::stepper::enable, pins::stepper::m0,
-               pins::stepper::m1, pins::stepper::m2);
 
+TMC2209Stepper driver(&Serial2, 0.11F, 0b00);
+
+ESP_FlexyStepper stepper;
 Ota *ota;
-Motion motion = Motion(static_cast<BasicStepperDriver>(driver)); // NOLINT(cppcoreguidelines-slicing)
+
+Motion motion = Motion(&driver, &stepper); // NOLINT(cppcoreguidelines-slicing)
 AsyncWebServer server(80);
 void setupDebugCommands();
 
@@ -36,15 +32,7 @@ void setupDebugCommands();
   }
 }
 
-[[noreturn]] void checkStepperFaultTask(void *) {
-  debugV("stepper fault task starting");
-  for (;;) {
-    delay(config::blinkTask::blinkInterval);
-    if (digitalRead(pins::stepper::fault) == LOW) {
-      debugE("stepper motor drive fault detected!");
-    }
-  }
-}
+
 
 [[noreturn]]  void secondaryLoopTask(void *) {
   for (;;) {
@@ -55,7 +43,6 @@ void setupDebugCommands();
 void setupWifi() {
   Serial.begin(config::serial::baud);
   WiFiClass::mode(WIFI_STA);
-
   // Helps manage wifi tx power
   esp_wifi_set_max_tx_power(8);
   WiFi.begin(ssid, password);
@@ -73,12 +60,30 @@ void app_main(void) {
   setup();
 }
 }
+// IO pin assignments
+const int MOTOR_STEP_PIN = 33;
+const int MOTOR_DIRECTION_PIN = 25;
+const int EMERGENCY_STOP_PIN = 13; //define the IO pin the emergency stop switch is connected to
+const int LIMIT_SWITCH_PIN = 32;   //define the IO pin where the limit switches are connected to (switches in series in normally closed setup against ground)
 
+// Speed settings
+const int DISTANCE_TO_TRAVEL_IN_STEPS = 2000;
+const int SPEED_IN_STEPS_PER_SECOND = 800;
+const int ACCELERATION_IN_STEPS_PER_SECOND = 800;
+const int DECELERATION_IN_STEPS_PER_SECOND = 800;
 void setup() {
+  pins::setup();
   setupWifi();
+  debugI("setting up pins");
   // In some cases code can cause the entire board to restart,
   // This delay allows a window for new programming
   delay(config::startupDelay);
+  stepper.connectToPins(pins::stepper::step, pins::stepper::direction);
+  // set the speed and acceleration rates for the stepper motor
+  stepper.setSpeedInStepsPerSecond(SPEED_IN_STEPS_PER_SECOND);
+  stepper.setAccelerationInStepsPerSecondPerSecond(ACCELERATION_IN_STEPS_PER_SECOND);
+  stepper.setDecelerationInStepsPerSecondPerSecond(DECELERATION_IN_STEPS_PER_SECOND);
+
 
   debugInstance.setup(server);
   setupDebugCommands();
@@ -86,47 +91,30 @@ void setup() {
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, "text/plain", "Hello, world");
   });
-  if (config::blinkTask::enabled) {
-    debugI("setting up blink");
-    xTaskCreate(runningBlinkTask,
-                "Blink While Running",
-                config::blinkTask::stackSize,
-                nullptr,
-                config::blinkTask::priority,
-                nullptr
-    );
-  }
+  delay(5000);
 
-  delay(config::startupDelay);
-  debugI("setting up pins");
-  pins::setup();
 
   debugI("setting up motion");
   motion.setup();
-  xTaskCreate(checkStepperFaultTask,
-              "Stepper Motor Fault Check",
-              config::blinkTask::stackSize,
-              nullptr,
-              config::blinkTask::priority,
-              nullptr
-  );
+
 
   debugI("starting secondary loop task");
   TaskHandle_t loopHandle;
-  xTaskCreateUniversal(secondaryLoopTask,
-                       "Loop Task",
-                       config::loopTask::stackSize,
-                       nullptr,
-                       config::loopTask::priority,
-                       &loopHandle,
-                       config::loopTask::core);
+//  xTaskCreateUniversal(secondaryLoopTask,
+//                       "Loop Task",
+//                       config::loopTask::stackSize,
+//                       nullptr,
+//                       config::loopTask::priority,
+//                       &loopHandle,
+//                       config::loopTask::core);
 
   debugI("setting up ota");
   Ota::setup();
 
   debugI("setup complete");
 }
-
+int coastingAcceleration = 4000;
+ int instantAcceleration = 4000;
 void setupDebugCommands() {
   debugInstance.registerCommand("en ", [](const std::string *args) {
     uint8_t enabled = 0;
@@ -138,7 +126,6 @@ void setupDebugCommands() {
     digitalWrite(pins::stepper::enable, enabled);
     debugI("Updated stepper motor enabled state %d", enabled);
   });
-
   debugInstance.registerCommand("gtc ", [](const std::string *args) {
     int containerIndex = 0;
 

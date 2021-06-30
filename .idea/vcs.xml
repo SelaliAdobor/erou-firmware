@@ -3,8 +3,11 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/arduino" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/components/external-libraries/ESP-FlexyStepper" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/external-libraries/ESPAsyncWebServer" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/components/external-libraries/FlexyStepper" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/external-libraries/arduinoWebSockets" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/components/external-libraries/espsoftwareserial" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/external-libraries/fmt-esp32" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/external-libraries/moodycamel-queue-esp32" vcs="Git" />
   </component>

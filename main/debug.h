@@ -12,20 +12,21 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <AsyncWebSocket.h>
+#include <AsyncTCP.h>
+#include "ESPAsyncWebServer.h"
 
 #include "config_constants.h"
-
+#include "freertos/stream_buffer.h"
 #include "fmt/format.h"
 
 #define debugV(fmt, ...)                                         \
-  debugInstance.printV("(%s)(%s)(C%d) " fmt, __FILE__, __PRETTY_FUNCTION__, \
+  debugInstance.printV("(%-25s)(%-50s)(C%d) " fmt, __FILE__, __PRETTY_FUNCTION__, \
                        xPortGetCoreID(), ##__VA_ARGS__)
 #define debugI(fmt, ...)                                                  \
-  debugInstance.printI("\033[1;32m(%s)(%s)(C%d) \033[1;0m" fmt, __FILE__, \
+  debugInstance.printI("\033[1;32m(%-25s)(%-50s)(C%d) \033[1;0m" fmt, __FILE__, \
                        __PRETTY_FUNCTION__, xPortGetCoreID(), ##__VA_ARGS__)
 #define debugE(fmt, ...)                                                  \
-  debugInstance.printE("\033[1;31m(%s)(%s)(C%d) \033[1;0m" fmt, __FILE__, \
+  debugInstance.printE("\033[1;31m(%-25s)(%-50s)(C%d) \033[1;0m" fmt, __FILE__, \
                        __PRETTY_FUNCTION__, xPortGetCoreID(), ##__VA_ARGS__)
 
 enum DebugLevel {
@@ -45,14 +46,17 @@ class Debug {
   };
 
   TaskHandle_t messageLoopHandle{};
-
+  TaskHandle_t commandRunnerHandle{};
   [[noreturn]] void messageBroadcastTask();
 
   inline static void messageBroadcastTaskWrapper(void *);
 
+  [[noreturn]] void commandRunnerTask();
+  inline static void commandRunnerTaskWrapper(void *);
   std::vector<DebugCommand> commands;
 
   moodycamel::ConcurrentQueue<DebugMessage> messageQueue;
+  moodycamel::ConcurrentQueue<std::string> commandQueue;
 
   void handleWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data,
                      size_t len);

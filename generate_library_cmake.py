@@ -4,11 +4,12 @@ from os.path import join
 
 libDir = "./components/external-libraries"
 srcFiles = []
-srcExclusions = []
+srcExclusions = [f'ESPAsyncWebServer/extras', f'ESPAsyncWebServer/examples']
 
 #Special case for fmt::fmt since it requires including parent dir
 includeDirs = ["fmt-esp32"]
 includeExclusions = ["fmt-esp32/fmt"]
+
 
 print(f'{libDir}/**')
 
@@ -20,8 +21,8 @@ for ext in ('*.h', '*.hpp'):
 
 includeDirs = (list(set(includeDirs)))
 
-includeDirs = filter(lambda i: i not in includeExclusions, includeDirs)
-srcFiles = filter(lambda i: i not in srcExclusions, srcFiles)
+includeDirs = filter(lambda i: list(filter(i.startswith, includeExclusions)) == [], includeDirs)
+srcFiles = filter(lambda i: list(filter(i.startswith, srcExclusions)) == [], srcFiles)
 
 print(srcFiles)
 print(includeDirs)
