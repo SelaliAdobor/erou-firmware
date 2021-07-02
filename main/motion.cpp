@@ -12,35 +12,20 @@
 
 void Motion::setup() {
   debugV("motion setup setting up stepper pins");
+  SPI.begin();
+
+  digitalWrite(pins::stepper::enable, HIGH);
+  digitalWrite(pins::stepper::direction, LOW);
+  digitalWrite(pins::stepper::step, LOW);
+  digitalWrite(pins::stepper::cs, HIGH);
+
+  driver->begin();
 
   stepper->connectToPins(pins::stepper::step, pins::stepper::direction);
   digitalWrite(pins::stepper::enable, LOW);
-  digitalWrite(pins::stepper::clock, LOW);
-  digitalWrite(pins::stepper::ms1, LOW);
-  digitalWrite(pins::stepper::ms2, LOW);
   stepper->setStepsPerRevolution(config::stepper::microsteps * config::stepper::stepsPerRotation);
 
-  driver->begin();                 //  SPI: Init CS pins and possible SW SPI pins
-  driver->pdn_disable(true);     // Use PDN/UART pin for communication
-  debugI("pdn_disable stepper motor crc status: %d", driver->CRCerror);
-  // UART: Init SW UART (if selected) with default 115200 baudrate
-  driver->toff(4);                 // Enables driver0b00 in software
-  debugI("toff stepper motor crc status: %d", driver->CRCerror);
-  driver->blank_time(24);
-  debugI("blank_time stepper motor crc status: %d", driver->CRCerror);
-  driver->rms_current(config::stepper::current);        // Set motor RMS current
-  debugI("rms_current stepper motor crc status: %d", driver->CRCerror);
-  driver->microsteps(config::stepper::microsteps);          // Set microsteps to 1/16th
-  debugI("microsteps stepper motor crc status: %d", driver->CRCerror);
-  driver->en_spreadCycle(false);   // Toggle spreadCycle on TMC2208/2209/2224
-  debugI("en_spreadCycle stepper motor crc status: %d", driver->CRCerror);
-  driver->pwm_autoscale(true);     // Needed for stealthChop
-  debugI("pwm_autoscale motor crc status: %d", driver->CRCerror);
-
-  debugI("stepper motor microsteps status: %d", driver->microsteps());
-  debugI("microsteps status: %d", driver->CRCerror);
-  debugI("stepper motor version status: %d", driver->version());
-  debugI("version status: %d", driver->CRCerror);
+  driver->begin();
   debugV("motion setup setting up homing");
   setupHoming();
 

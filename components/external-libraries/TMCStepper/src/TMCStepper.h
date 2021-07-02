@@ -1015,7 +1015,7 @@ class TMC2208Stepper : public TMCStepper {
 		uint8_t calcCRC(uint8_t datagram[], uint8_t len);
 		static constexpr uint8_t  TMC2208_SYNC = 0x05,
 															TMC2208_SLAVE_ADDR = 0x00;
-		static constexpr uint8_t replyDelay = 2;
+		static constexpr uint8_t replyDelay = 0;
 		static constexpr uint8_t abort_window = 5;
 		static constexpr uint8_t max_retries = 2;
 

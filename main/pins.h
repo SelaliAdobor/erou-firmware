@@ -4,16 +4,18 @@ namespace pins {
 const int onboardLed = 2;
 
 namespace stepper {
+//CSN/CS=>2
+//SCK =>18*
+//SDI/MOSI => 23*
+//SDO/MISO => 19
+//EN=>27
 const int enable = 27;
 
-const int ms1 = 23;
-const int ms2 = 18;
+const int cs = 5;//SDI/MOSI
+const int sck = 18;//SCK
+const int mosi = 23;//SCK
+const int miso = 19;//SCK
 
-const int pdnTx = 5;
-const int pdnRx = 26;
-
-const int standby = 21;
-const int clock = 25;
 
 const int direction = 33;
 const int step = 32;
@@ -28,14 +30,14 @@ const int homingHallEffect = 35;
 inline void setup() {
   pinMode(pins::onboardLed, OUTPUT);
 
-  pinMode(pins::stepper::ms1, OUTPUT);
-  pinMode(pins::stepper::ms2, OUTPUT);
+  pinMode(pins::stepper::enable, OUTPUT);
 
-  pinMode(pins::stepper::pdnTx, INPUT);
-  pinMode(pins::stepper::pdnRx, OUTPUT);
+  pinMode(pins::stepper::cs, OUTPUT);
+  pinMode(pins::stepper::sck, OUTPUT);
 
-  pinMode(pins::stepper::standby, OUTPUT);
-  pinMode(pins::stepper::clock, OUTPUT);
+  pinMode(pins::stepper::mosi, INPUT);
+  pinMode(pins::stepper::miso, INPUT_PULLUP);
+
 
   pinMode(pins::stepper::direction, OUTPUT);
   pinMode(pins::stepper::step, OUTPUT);

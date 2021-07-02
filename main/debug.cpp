@@ -5,12 +5,18 @@
 #include "fmt/format.h"
 #include "fmt/printf.h"
 #include <functional>
-#include <memory>
 
 Debug debugInstance = Debug();
+int esp_apptrace_vprintf(const char *fmt, va_list ap){
+  char espString[50];
+  int written = vsprintf(espString, fmt, ap);
+  debugESP("ESP Log: %s", espString);
+  return written;
+}
 
 void Debug::setup(AsyncWebServer &server) {
   server.addHandler(&ws);
+  esp_log_set_vprintf(esp_apptrace_vprintf);
   using namespace std::placeholders;  /* NOLINT(google-build-using-namespace)
                                            (If someone redefines _X they deserve the clash.)*/
   ws.onEvent(std::bind(&Debug::handleWsEvent,
@@ -86,20 +92,24 @@ void Debug::commandRunnerTaskWrapper(void *_this) {
 void Debug::messageBroadcastTaskWrapper(void *_this) {
   static_cast<Debug *>(_this)->messageBroadcastTask();
 }
+bool invalidChar (unsigned char c)
+{
+  return !(c>=0 && c <128);
+}
+void stripUnicode(std::string & str)
+{
+  str.erase(remove_if(str.begin(),str.end(), invalidChar), str.end());
+}
 
 [[noreturn]] void Debug::messageBroadcastTask() {
   for (;;) {
     ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(2000));
-    //Allow 15 seconds for debug connection before broadcasting regardless of WS connection
-    if(ws.getClients().empty() && (millis() < 15000)){
-      continue;
-    }
     DebugMessage message;
     while (messageQueue.try_dequeue(message)) {
       Serial.println(message.content.c_str());
       if (message.level >= loggingLevel) {
+        stripUnicode(message.content);
         ws.textAll(message.content.c_str(), message.content.length());
-        Serial.println(message.content.c_str());
       }
     }
   }

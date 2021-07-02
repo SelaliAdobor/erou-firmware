@@ -25,6 +25,9 @@
 #define debugI(fmt, ...)                                                  \
   debugInstance.printI("\033[1;32m(%-25s)(%-50s)(C%d) \033[1;0m" fmt, __FILE__, \
                        __PRETTY_FUNCTION__, xPortGetCoreID(), ##__VA_ARGS__)
+#define debugESP(fmt, ...)                                                  \
+  debugInstance.printI("\033[1;33m(%-25s)(%-50s)(C%d) \033[1;0m" fmt, "esp", \
+                       "esp", xPortGetCoreID(), ##__VA_ARGS__)
 #define debugE(fmt, ...)                                                  \
   debugInstance.printE("\033[1;31m(%-25s)(%-50s)(C%d) \033[1;0m" fmt, __FILE__, \
                        __PRETTY_FUNCTION__, xPortGetCoreID(), ##__VA_ARGS__)
