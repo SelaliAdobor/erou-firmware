@@ -10,7 +10,7 @@
 class Ota {
  private:
   [[noreturn]]  static void otaTask(void *);
-
+  static TaskHandle_t otaTaskHandle;
  public:
   static void setup();
 };

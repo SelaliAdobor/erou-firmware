@@ -5,7 +5,6 @@
 #include <functional>
 #include <limits>
 
-#include "DRV8825.h"
 #include "config_constants.h"
 #include "debug.h"
 #include "motion.h"
@@ -72,6 +71,8 @@ void Motion::internalHoming(float rpm, bool reverse) {
   onHomeStatusChanged = [this, &foundHome](bool isHome) mutable {
     if (isHome) {
       foundHome = true;
+
+      setSpeedControl(false);
       stepper->setTargetPositionToStop();
       while (!stepper->processMovement());
       onHomeStatusChanged = nullptr;
@@ -83,8 +84,10 @@ void Motion::internalHoming(float rpm, bool reverse) {
 
   uint32_t homingStart = millis();
   float fullRotation = reverse ? -360 : 360;
+  setSpeedControl(true);
   while (!foundHome &&
       millis() - homingStart <= config::motion::maxHomingDurationMs) {
+
     debugV("internal homing starting rotations");
     stepper->moveRelativeInRevolutions(degToRev(fullRotation));
   }

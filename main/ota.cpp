@@ -2,12 +2,15 @@
 
 #include "debug.h"
 
+TaskHandle_t Ota::otaTaskHandle = nullptr;
+
 void Ota::setup() {
 
   ArduinoOTA.setHostname("erou");
 
   ArduinoOTA
       .onStart([]() {
+        vTaskPrioritySet(otaTaskHandle, 18);
         if (ArduinoOTA.getCommand() == U_FLASH) {
           debugI("Start updating via flash");
         } else {
@@ -50,7 +53,7 @@ void Ota::setup() {
       10000,            /* Stack size in bytes. */
       nullptr,             /* Parameter passed as input of the task */
       1,                /* Priority of the task. */
-      nullptr);            /* Task handle. */
+      &otaTaskHandle);            /* Task handle. */
 }
 
 void Ota::otaTask(void *) {

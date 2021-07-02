@@ -11,7 +11,6 @@
 #include "ota.h"
 #include "ota_credentials.h"
 #include "pins.h"
-#include "driver.h"
 #include <bitset>
 
 TMC2130Stepper driver(pins::stepper::cs);
@@ -23,6 +22,7 @@ Motion motion = Motion(&driver, &stepper); // NOLINT(cppcoreguidelines-slicing)
 AsyncWebServer server(80);
 void setupDebugCommands();
 
+#include <TMC2130_bitfields.h>
 void setupWebServer();
 void setupDebug();
 [[noreturn]] void runningBlinkTask(void *) {
@@ -37,7 +37,10 @@ void setupDebug();
 
 [[noreturn]]  void secondaryLoopTask(void *) {
   for (;;) {
-    delay(500);
+    delay(5000);
+    debugI( "RAM left %d", esp_get_free_heap_size());
+    debugI( "Stack used %d", uxTaskGetStackHighWaterMark(NULL));
+    debugI("Stall detected? %d %s", int(driver.stallguard()), std::bitset<32>(driver.DRV_STATUS()).to_string());
   }
 }
 
@@ -64,49 +67,25 @@ void app_main(void) {
 
 void setup() {
   pins::setup();
-  digitalWrite(pins::stepper::enable, LOW);
-
   setupWifi();
-  debugI("setting up ota");
   Ota::setup();
   setupDebug();
   setupWebServer();
+  debugI("Setup waiting for debug connections");
   delay(10000);
-
-  delay(100);
-for(;;) {
-  debugI("got driver version %d, %s", int(driver.version()), std::bitset<32>(driver.IOIN()).to_string());
-  delay(1000);
-}
-Serial2.begin(19200, SERIAL_8N1);
-
-
-  debugI("setting up pins");
-
-  delay(2000);
-  // In some cases code can cause the entire board to restart,
-  // This delay allows a window for new programming
-  delay(config::startupDelay);
-  delay(config::startupDelay);
-
-  delay(config::startupDelay);
-  delay(config::startupDelay);
-  stepper.connectToPins(pins::stepper::step, pins::stepper::direction);
-
-  delay(5000);
 
   debugI("setting up motion");
   motion.setup();
 
   debugI("starting secondary loop task");
   TaskHandle_t loopHandle;
-//  xTaskCreateUniversal(secondaryLoopTask,
-//                       "Loop Task",
-//                       config::loopTask::stackSize,
-//                       nullptr,
-//                       config::loopTask::priority,
-//                       &loopHandle,
-//                       config::loopTask::core);
+  xTaskCreateUniversal(secondaryLoopTask,
+                       "Loop Task",
+                       config::loopTask::stackSize,
+                       nullptr,
+                       config::loopTask::priority,
+                       &loopHandle,
+                       config::loopTask::core);
 
   debugI("setup complete");
 }
@@ -140,7 +119,9 @@ void setupDebug() {
     motion.goToContainerAt(containerIndex);
     debugI("Went to container %d after debug command", containerIndex);
   });
-
+  debugInstance.registerCommand("ut", [](const std::string *) {
+    debugI("%d seconds since last reboot", int(esp_timer_get_time() / 1000));
+  });
 }
 void setupWebServer() {
   server.begin();

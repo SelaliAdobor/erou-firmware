@@ -19,20 +19,17 @@ void Motion::setup() {
   digitalWrite(pins::stepper::step, LOW);
   digitalWrite(pins::stepper::cs, HIGH);
 
-  driver->begin();
-
+  setupDriver();
   stepper->connectToPins(pins::stepper::step, pins::stepper::direction);
   digitalWrite(pins::stepper::enable, LOW);
   stepper->setStepsPerRevolution(config::stepper::microsteps * config::stepper::stepsPerRotation);
 
-  driver->begin();
   debugV("motion setup setting up homing");
   setupHoming();
 
   delay(1000);
 
-
-    xTaskCreate(checkStepperFaultTaskWrapper,
+  xTaskCreate(checkStepperFaultTaskWrapper,
               "Stepper Motor Fault Check",
               config::blinkTask::stackSize,
               this,
@@ -42,6 +39,24 @@ void Motion::setup() {
 
   debugV("motion setup completed");
 }
+void Motion::setupDriver() const {
+  driver->begin();
+  driver->push();
+  driver->toff(3);
+  driver->tbl(1);
+  driver->hysteresis_start(4);
+  driver->hysteresis_end(-2);
+  driver->rms_current(1200); // mA
+  driver->microsteps(config::stepper::microsteps);
+  driver->diag0_stall(1);
+  driver->THIGH(0);
+  driver->semin(5);
+  driver->sfilt(true); // Improves SG readout.
+  driver->semax(2);
+  driver->sedn(0b01);
+  driver->rms_current(800);
+  driver->sgt(-10);
+}
 
 void Motion::setSpeedControl(bool enabled) {
   if (enabled) {
@@ -49,8 +64,10 @@ void Motion::setSpeedControl(bool enabled) {
     stepper->setDecelerationInStepsPerSecondPerSecond(rAccelTosAccel(config::stepper::deceleration));
   } else {
     //This library doesn't support disabling acceleration/deceleration, so move them to near instant
-    stepper->setAccelerationInStepsPerSecondPerSecond(rAccelTosAccel(config::stepper::acceleration*1.3F));
-    stepper->setDecelerationInStepsPerSecondPerSecond(rAccelTosAccel(config::stepper::deceleration*1.3F));
+    stepper->setAccelerationInStepsPerSecondPerSecond(
+        rAccelTosAccel(config::stepper::acceleration * 1.3F));
+    stepper->setDecelerationInStepsPerSecondPerSecond(
+        rAccelTosAccel(config::stepper::deceleration * 4.0F));
   }
 
   debugV("motion speed control changed %d", enabled);
@@ -73,18 +90,18 @@ void Motion::goToContainerAt(const int index) {
   }
   debugV(
       "motion going to container starting rotation, scaledRpm: %f rotated: %f",
-      rpmToSps(config::motion::rpmContainerTravelMax), degToRev(rotation));
+      rpmToSps(scaledRpm), degToRev(rotation));
 
   setSpeedControl(true);
   //TODO: Replace with scaled RPM
-  stepper->setSpeedInStepsPerSecond(rpmToSps(config::motion::rpmContainerTravelMax));
+  stepper->setSpeedInStepsPerSecond(rpmToSps(scaledRpm));
   stepper->moveRelativeInRevolutions(degToRev(rotation));
 
   debugV("motion going to container finished");
   currentContainer = index;
 }
-void Motion::checkStepperFaultTaskWrapper(void * _this){
-    static_cast<Motion *>(_this)->checkStepperFaultTask();
+void Motion::checkStepperFaultTaskWrapper(void *_this) {
+  static_cast<Motion *>(_this)->checkStepperFaultTask();
 }
 [[noreturn]] void Motion::checkStepperFaultTask() {
   debugV("stepper fault task starting");

@@ -10,7 +10,6 @@
 #include <utility>
 #include <FlexyStepper.h>
 
-#include "BasicStepperDriver.h"
 //Convert acceleration in revolutions to steps
 inline float rAccelTosAccel(float rAccel) {
   return (rAccel * config::stepper::stepsPerRotation * config::stepper::microsteps) / 60.0F;
@@ -50,4 +49,5 @@ class Motion {
   void setup();
   void goToHome(bool forceHoming);
   void goToContainerAt(int index);
+  void setupDriver() const;
 };

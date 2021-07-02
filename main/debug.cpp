@@ -92,13 +92,15 @@ void Debug::commandRunnerTaskWrapper(void *_this) {
 void Debug::messageBroadcastTaskWrapper(void *_this) {
   static_cast<Debug *>(_this)->messageBroadcastTask();
 }
-bool invalidChar (unsigned char c)
+
+bool isInvalidChar (int c)
 {
   return !(c>=0 && c <128);
 }
+
 void stripUnicode(std::string & str)
 {
-  str.erase(remove_if(str.begin(),str.end(), invalidChar), str.end());
+  str.erase(remove_if(str.begin(), str.end(), isInvalidChar), str.end());
 }
 
 [[noreturn]] void Debug::messageBroadcastTask() {
@@ -111,6 +113,7 @@ void stripUnicode(std::string & str)
         stripUnicode(message.content);
         ws.textAll(message.content.c_str(), message.content.length());
       }
+      delay(10);
     }
   }
 }

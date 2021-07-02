@@ -37,3 +37,6 @@
 [submodule "components/external-libraries/ESP-FlexyStepper"]
 	path = components/external-libraries/ESP-FlexyStepper
 	url = git@github.com:pkerspe/ESP-FlexyStepper.git
+[submodule "components/external-libraries/utf8proc"]
+	path = components/external-libraries/utf8proc
+	url = git@github.com:JuliaStrings/utf8proc.git
