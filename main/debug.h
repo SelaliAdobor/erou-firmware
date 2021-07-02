@@ -3,9 +3,7 @@
 #include "WiFiServer.h"
 
 #include "WiFi.h"
-#include <concurrentqueue.h>
 #include <freertos/FreeRTOS.h>
-#include <freertos/ringbuf.h>
 #include <freertos/task.h>
 
 #include <list>
@@ -38,6 +36,11 @@ enum DebugLevel {
 
 class Debug {
  private:
+  const int maxMessagesInQueue = 500;
+
+  QueueHandle_t messageQueue = nullptr;
+  QueueHandle_t commandQueue = nullptr;
+
   struct DebugMessage {
     DebugLevel level;
     std::string content;
@@ -48,24 +51,27 @@ class Debug {
     std::function<void(const std::string *)> run;
   };
 
+  std::vector<DebugCommand> registeredCommands;
+
   TaskHandle_t messageLoopHandle{};
   TaskHandle_t commandRunnerHandle{};
+
   [[noreturn]] void messageBroadcastTask();
 
-  inline static void messageBroadcastTaskWrapper(void *);
-
   [[noreturn]] void commandRunnerTask();
-  inline static void commandRunnerTaskWrapper(void *);
-  std::vector<DebugCommand> commands;
 
-  moodycamel::ConcurrentQueue<DebugMessage> messageQueue;
-  moodycamel::ConcurrentQueue<std::string> commandQueue;
-
-  void handleWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data,
+  void handleWsEvent(AsyncWebSocket *server,
+                     AsyncWebSocketClient *client,
+                     AwsEventType type,
+                     void *arg,
+                     uint8_t *data,
                      size_t len);
-  AsyncWebSocket ws = AsyncWebSocket(config::debug::wsDebugEndpoint);
 
+  AsyncWebSocket ws = AsyncWebSocket(config::debug::wsDebugEndpoint);
+  AwsEventHandler handler;
  public:
+  Debug();
+
   DebugLevel loggingLevel = DebugLevel::Verbose;
   void registerCommand(std::string name,
                        std::function<void(const std::string *)> run);
@@ -88,7 +94,6 @@ class Debug {
   };
   FMT_VARIADIC(void, printE, fmt::CStringRef)
 
-  Debug();
   void setup(AsyncWebServer &server);
 };
 

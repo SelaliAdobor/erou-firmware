@@ -8,13 +8,10 @@
 #include "config_constants.h"
 #include "debug.h"
 #include "motion.h"
+#include "free_rtos_util.h"
 #include "pins.h"
 
 TaskHandle_t Motion::homingSensorTaskHandle = nullptr;
-
-void Motion::homingSensorTaskWrapper(void *_this) {
-  static_cast<Motion *>(_this)->homingSensorTask();
-}
 
 void Motion::setupHoming() {
   pinMode(pins::sensors::homingHallEffect, INPUT);
@@ -22,7 +19,7 @@ void Motion::setupHoming() {
                   Motion::homingSensorIsr, CHANGE);
 
   xTaskCreate(
-      Motion::homingSensorTaskWrapper,  // Function that should be called
+      toFreeRtosTask(Motion, homingSensorTask),  // Function that should be called
       "UpdateHallSensorStatus",         // Name of the task (for debugging)
       4024,                             // Stack size (bytes)
       this,                             // Parameter to pass
@@ -112,7 +109,7 @@ void Motion::goToHome(bool forceHoming) {
     if (reversingAngleAbsolute > 180) {
       reversingAngle = 360 - reversingAngleAbsolute;
     }
-    stepper->moveRelativeInRevolutions(reversingAngle/360.0F);
+    stepper->moveRelativeInRevolutions(reversingAngle / 360.0F);
     if (isHomeSensorTriggered()) {
       debugI("motion homing early exit, home found after reverse rotation");
       return;

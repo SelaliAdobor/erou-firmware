@@ -23,25 +23,25 @@ inline float rpmToSps(float rpm) {
 
 class Motion {
  private:
+  int currentContainer = 0;
+
   TMC2130Stepper *driver;
   ESP_FlexyStepper *stepper;
 
   std::function<void(bool)> onHomeStatusChanged = nullptr;
-  int currentContainer = 0;
 
   void setSpeedControl(bool enabled);
-
   void setupHoming();
-  static bool isHomeSensorTriggered();
-  [[noreturn]] void homingSensorTask();
   void internalHoming(float rpm, bool reverse);
 
+
+  static bool isHomeSensorTriggered();
+  static void homingSensorIsr();
+
   static TaskHandle_t homingSensorTaskHandle;
-  inline static void homingSensorTaskWrapper(void *);
+  [[noreturn]] void homingSensorTask();
 
   [[noreturn]] inline void checkStepperFaultTask();
-  inline static void checkStepperFaultTaskWrapper(void *);
-  static void homingSensorIsr();
  public:
   Motion(TMC2130Stepper *d, ESP_FlexyStepper *s) :
       driver(d), stepper(s) {}

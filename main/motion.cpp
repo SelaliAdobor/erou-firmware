@@ -9,6 +9,7 @@
 #include "debug.h"
 #include "pins.h"
 #include "math_util.h"
+#include "free_rtos_util.h"
 
 void Motion::setup() {
   debugV("motion setup setting up stepper pins");
@@ -29,7 +30,7 @@ void Motion::setup() {
 
   delay(1000);
 
-  xTaskCreate(checkStepperFaultTaskWrapper,
+  xTaskCreate(toFreeRtosTask(Motion, checkStepperFaultTask),
               "Stepper Motor Fault Check",
               config::blinkTask::stackSize,
               this,
@@ -99,9 +100,6 @@ void Motion::goToContainerAt(const int index) {
 
   debugV("motion going to container finished");
   currentContainer = index;
-}
-void Motion::checkStepperFaultTaskWrapper(void *_this) {
-  static_cast<Motion *>(_this)->checkStepperFaultTask();
 }
 [[noreturn]] void Motion::checkStepperFaultTask() {
   debugV("stepper fault task starting");

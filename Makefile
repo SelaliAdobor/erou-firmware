@@ -3,6 +3,6 @@
 # project subdirectory.
 #
 
-PROJECT_NAME := hello-world
+PROJECT_NAME := erou-firmware
 
 include $(IDF_PATH)/make/project.mk
