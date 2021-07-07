@@ -120,7 +120,7 @@ void setupDebug() {
     debugI("Went to container %d after debug command", containerIndex);
   });
   debugInstance.registerCommand("ut", [](const std::string *) {
-    debugI("%d seconds since last reboot", int(esp_timer_get_time() / 1000));
+    debugI("%d seconds since last reboot", int(esp_timer_get_time() / 1000000));
   });
 }
 void setupWebServer() {

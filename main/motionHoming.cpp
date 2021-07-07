@@ -71,7 +71,7 @@ void Motion::internalHoming(float rpm, bool reverse) {
 
       setSpeedControl(false);
       stepper->setTargetPositionToStop();
-      while (!stepper->processMovement());
+      while (!stepper->processMovement()) { vTaskDelay(1); }
       onHomeStatusChanged = nullptr;
       debugV("internal homing found home");
     }

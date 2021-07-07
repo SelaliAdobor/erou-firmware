@@ -2,8 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/erou-firmware-esp32.iml" filepath="$PROJECT_DIR$/.idea/hello-world.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/erou-firmware-esp32.iml" filepath="$PROJECT_DIR$/.idea/hello_world.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/erou-firmware-esp32.iml" filepath="$PROJECT_DIR$/.idea/erou-firmware-esp32.iml" />
     </modules>
   </component>
 </project>

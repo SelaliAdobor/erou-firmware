@@ -7,7 +7,6 @@
 #include <freertos/task.h>
 
 #include <list>
-#include <sstream>
 #include <string>
 #include <vector>
 #include <AsyncTCP.h>

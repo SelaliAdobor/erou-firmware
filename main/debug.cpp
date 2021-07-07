@@ -2,14 +2,13 @@
 #include <deque>
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
-
+#include <new>
 #include "fmt/format.h"
 #include "fmt/printf.h"
 #include <functional>
 #include "free_rtos_util.h"
 
 Debug debugInstance = Debug();
-
 int esp_apptrace_vprintf(const char *fmt, va_list ap) {
   char espString[50];
   int written = vsprintf(espString, fmt, ap);
@@ -34,7 +33,7 @@ void Debug::setup(AsyncWebServer &server) {
 
 Debug::Debug() {
 
-  messageQueue = xQueueCreate(maxMessagesInQueue, sizeof(std::string));
+  messageQueue = xQueueCreate(maxMessagesInQueue, sizeof(DebugMessage &));
   commandQueue = xQueueCreate(maxMessagesInQueue, sizeof(std::string));
 
   xTaskCreate(toFreeRtosTask(Debug, messageBroadcastTask),
@@ -51,7 +50,6 @@ Debug::Debug() {
               config::debug::wsTaskPriority,
               &commandRunnerHandle
   );
-
   registerCommand("level ", [this](const std::string *args) {
     int newLevel = 0;
     if (sscanf(args->c_str(), "%d", &newLevel) != 1) {
@@ -70,9 +68,7 @@ void Debug::printMessage(DebugLevel level, fmt::CStringRef format,
       level,
       formattedString,
   };
-  message->content = formattedString;
-  message->level = level;
-  xQueueSend(messageQueue, message, pdMS_TO_TICKS(5));
+  xQueueSend(messageQueue, &message, pdMS_TO_TICKS(5));
 
 }
 
@@ -81,22 +77,31 @@ void Debug::printMessage(DebugLevel level, fmt::CStringRef format,
     debugE("Attempted to start command task without queue");
   }
   for (;;) {
-    std::string commandString;
-    if (xQueueReceive(commandQueue, &commandString, portMAX_DELAY)) {
+    std::string* commandStringAddress;
+    if (xQueueReceive(commandQueue, &commandStringAddress, portMAX_DELAY)) {
+
+      auto commandString = std::unique_ptr<std::string>(commandStringAddress);
       bool commandRan = false;
       for (const DebugCommand &command : registeredCommands) {
-        if (commandString.rfind(command.name, 0) != 0) {
-          continue; //Command didn't match
+        if (commandString->rfind(command.name, 0) != 0) {
+          continue;
         }
 
-        const std::string args = commandString.substr(command.name.length());
-        debugI("Matched Command with: %s", args);
-        command.run(&args);
+        if (commandString->length() > command.name.length()) {
+          const std::string args = commandString->substr(command.name.length());
+          debugI("Matched Command `%s` with args `%s`", command.name, args);
+          command.run(&args);
+        } else {
+          const std::string empty;
+          debugI("Matched Command `%s`", command.name);
+          command.run(&empty);
+        }
+
         commandRan = true;
         break;
       }
       if (!commandRan) {
-        debugE("Unknown Command: %s", commandString);
+        debugE("Unknown Command: %s", *commandString);
       }
     }
   }
@@ -140,14 +145,13 @@ void Debug::registerCommand(std::string name,
   DebugCommand newCommand = {std::move(name), std::move(run)};
   registeredCommands.push_back(newCommand);
 }
-
 void Debug::handleWsEvent(AsyncWebSocket *,
                           AsyncWebSocketClient *client,
                           AwsEventType type,
                           void *arg,
                           uint8_t *data,
                           size_t len) {
-  std::string payloadText;
+
   uint32_t clientId = client->id();
   AwsFrameInfo *info;
   switch (type) {
@@ -167,7 +171,7 @@ void Debug::handleWsEvent(AsyncWebSocket *,
     case WS_EVT_DATA: {
       info = static_cast<AwsFrameInfo *>(arg);
       if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
-        payloadText = std::string(reinterpret_cast<char *>(data), info->len);
+        auto *payloadText = new std::string(reinterpret_cast<char *>(data), info->len);
         xQueueSend(commandQueue, &payloadText, pdMS_TO_TICKS(500));
       }
       break;
