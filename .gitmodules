@@ -40,3 +40,18 @@
 [submodule "components/external-libraries/utf8proc"]
 	path = components/external-libraries/utf8proc
 	url = git@github.com:JuliaStrings/utf8proc.git
+[submodule "components/external-libraries/Effortless-SPIFFS"]
+	path = components/external-libraries/Effortless-SPIFFS
+	url = git@github.com:thebigpotatoe/Effortless-SPIFFS.git
+[submodule "components/external-libraries/constexpr-to-string"]
+	path = components/external-libraries/constexpr-to-string
+	url = git@github.com:tcsullivan/constexpr-to-string.git
+[submodule "components/external-libraries/binn"]
+	path = components/external-libraries/binn
+	url = git@github.com:liteserver/binn.git
+[submodule "components/ArduinoJson"]
+	path = components/ArduinoJson
+	url = git@github.com:bblanchon/ArduinoJson.git
+[submodule "components/external-libraries/croncpp"]
+	path = components/external-libraries/croncpp
+	url = git@github.com:SelaliAdobor/croncpp.git

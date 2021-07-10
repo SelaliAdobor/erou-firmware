@@ -1,6 +1,6 @@
 #ifndef CONFIG_CONSTANTS_H
 #define CONFIG_CONSTANTS_H
-
+#include <cstdint>
 namespace config {
 
 const int64_t startupDelay = 5000L;

@@ -5,7 +5,7 @@
 #include "WiFi.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
-
+#include <functional>
 #include <list>
 #include <string>
 #include <vector>
@@ -16,17 +16,17 @@
 #include "freertos/stream_buffer.h"
 #include "fmt/format.h"
 
-#define debugV(fmt, ...)                                         \
+#define debugV(fmt, ...)\
   debugInstance.printV("(%-25s)(%-50s)(C%d) " fmt, __FILE__, __PRETTY_FUNCTION__, \
                        xPortGetCoreID(), ##__VA_ARGS__)
-#define debugI(fmt, ...)                                                  \
-  debugInstance.printI("\033[1;32m(%-25s)(%-50s)(C%d) \033[1;0m" fmt, __FILE__, \
+#define debugI(fmt, ...)\
+  debugInstance.printI("\033[1;32m(%-25s)(%-50s)(C%d) \033[1;0m" fmt, __FILE__,\
                        __PRETTY_FUNCTION__, xPortGetCoreID(), ##__VA_ARGS__)
-#define debugESP(fmt, ...)                                                  \
-  debugInstance.printI("\033[1;33m(%-25s)(%-50s)(C%d) \033[1;0m" fmt, "esp", \
+#define debugESP(fmt, ...)\
+  debugInstance.printI("\033[1;33m(%-25s)(%-50s)(C%d) \033[1;0m" fmt, "esp",\
                        "esp", xPortGetCoreID(), ##__VA_ARGS__)
-#define debugE(fmt, ...)                                                  \
-  debugInstance.printE("\033[1;31m(%-25s)(%-50s)(C%d) \033[1;0m" fmt, __FILE__, \
+#define debugE(fmt, ...)\
+  debugInstance.printE("\033[1;31m(%-25s)(%-50s)(C%d) \033[1;0m" fmt, __FILE__,\
                        __PRETTY_FUNCTION__, xPortGetCoreID(), ##__VA_ARGS__)
 
 enum DebugLevel {

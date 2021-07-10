@@ -6,7 +6,7 @@
 #include <limits>
 
 #include "config_constants.h"
-#include "debug.h"
+#include "wsdebug.h"
 #include "motion.h"
 #include "free_rtos_util.h"
 #include "pins.h"

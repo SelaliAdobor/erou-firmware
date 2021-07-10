@@ -1,6 +1,6 @@
 #include "ota.h"
 
-#include "debug.h"
+#include "wsdebug.h"
 
 TaskHandle_t Ota::otaTaskHandle = nullptr;
 

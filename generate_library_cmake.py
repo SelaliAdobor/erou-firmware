@@ -4,20 +4,31 @@ from os.path import join
 
 libDir = "./components/external-libraries"
 srcFiles = []
-srcExclusions = [f'ESPAsyncWebServer/extras', f'ESPAsyncWebServer/examples']
+srcExclusions = [
+    f'ESPAsyncWebServer/extras',
+    f'ESPAsyncWebServer/examples',
+    "binn/examples",
+    "binn/conversions",
+    "binn/src/win32",
+    "binn/test",
+    "build",
+    "croncpp/benchmark"
+    , "croncpp/catch"
+    , "croncpp/res",
+    "croncpp/test"]
 
-#Special case for fmt::fmt since it requires including parent dir
+# Special case for fmt::fmt since it requires including parent dir
 includeDirs = ["fmt-esp32"]
 includeExclusions = ["fmt-esp32/fmt"]
-
 
 print(f'{libDir}/**')
 
 for ext in ('*.c', '*.cpp', '*.cc', '*.cxx'):
-    srcFiles.extend(map(lambda path: os.path.relpath(path, libDir), glob(join(f'{libDir}/**/*', ext), recursive = True)))
+    srcFiles.extend(map(lambda path: os.path.relpath(path, libDir), glob(join(f'{libDir}/**/*', ext), recursive=True)))
 
 for ext in ('*.h', '*.hpp'):
-    includeDirs.extend(map(lambda path: os.path.relpath(os.path.dirname(path), libDir), glob(join(f'{libDir}/**/*', ext), recursive = True)))
+    includeDirs.extend(map(lambda path: os.path.relpath(os.path.dirname(path), libDir),
+                           glob(join(f'{libDir}/**/*', ext), recursive=True)))
 
 includeDirs = (list(set(includeDirs)))
 

@@ -1,4 +1,4 @@
-#include "debug.h"
+#include "wsdebug.h"
 #include <deque>
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
@@ -9,12 +9,9 @@
 #include "free_rtos_util.h"
 
 Debug debugInstance = Debug();
-int esp_apptrace_vprintf(const char *fmt, va_list ap) {
-  char espString[50];
-  int written = vsprintf(espString, fmt, ap);
-  debugESP("ESP Log: %s", espString);
-  return written;
-}
+
+//ESP-IDF callback for debug statements
+int esp_apptrace_vprintf(const char *fmt, va_list ap);
 
 void Debug::setup(AsyncWebServer &server) {
   server.addHandler(&ws);
@@ -178,4 +175,11 @@ void Debug::handleWsEvent(AsyncWebSocket *,
     }
     default:break;
   }
+}
+
+int esp_apptrace_vprintf(const char *fmt, va_list ap) {
+  char espString[50];
+  int written = vsprintf(espString, fmt, ap);
+  debugESP("ESP Log: %s", espString);
+  return written;
 }
