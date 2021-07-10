@@ -1,14 +1,17 @@
 #pragma once
 #include "containerManager.h"
-#include "ArduinoJson.h"
+//include "ArduinoJson.h"
 #include "container.h"
 #include "config_constants.h"
+#include "etl/unordered_map.h"
 
+using ContainerMap = etl::unordered_map<int, Container, config::physical::containerCount>;
+
+//TODO: Refactor to separate container definition from container contents
 class ContainerManager {
  private:
-  Container containerContents[config::physical::containerCount];
-  bool hasContent[config::physical::containerCount];
-  static const size_t maxContainerDBSize = 4048;
+  ContainerMap containerContents;
+  static const size_t maxContainerDBSize = 8048;
 
   void updateDbFile(char *buffer, size_t length);
   static constexpr const char* jsonContainerKey ="container";
@@ -29,7 +32,7 @@ class ContainerManager {
 
   std::optional<Container> getContainerContent(int container);
   void setContainerContent(int container, Container content);
-
+  ContainerMap getAllLoadedContainers();
   void setup();
 
   void loadFromDisk();

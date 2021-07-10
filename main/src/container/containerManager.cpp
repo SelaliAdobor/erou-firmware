@@ -11,7 +11,7 @@ std::optional<Container> ContainerManager::getContainerContent(const int contain
     debugE("Attempted to retrieve out of bounds container %d", container);
     return {};
   }
-  if (!hasContent[container]) {
+  if (containerContents.find(container) == containerContents.end()) {
     return {};
   }
 
@@ -23,15 +23,16 @@ void ContainerManager::setContainerContent(int container, const Container conten
     debugE("Attempted to set out of bounds container %d", container);
     return;
   }
-  containerContents[container] = content;
-  hasContent[container] = true;
+  containerContents.insert(ContainerMap::value_type(container, content));
 }
 
 ContainerManager::ContainerManager() {
-  std::fill_n(hasContent, config::physical::containerCount, 0);
 }
 
 
 void ContainerManager::setup() {
   loadFromDisk();
+}
+ContainerMap ContainerManager::getAllLoadedContainers() {
+  return containerContents;
 }

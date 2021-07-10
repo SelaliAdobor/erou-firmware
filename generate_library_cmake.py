@@ -15,7 +15,8 @@ srcExclusions = [
     "croncpp/benchmark"
     , "croncpp/catch"
     , "croncpp/res",
-    "croncpp/test"]
+    "croncpp/test",
+]
 
 # Special case for fmt::fmt since it requires including parent dir
 includeDirs = ["fmt-esp32"]

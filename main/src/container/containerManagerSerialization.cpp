@@ -1,6 +1,6 @@
 #include "containerManager.h"
-#include "wsdebug.h"
-#include "ArduinoJson.h"
+//#include "wsdebug.h"
+//#include "ArduinoJson.h"
 #include "SPIFFS.h"
 
 void ContainerManager::loadFromDisk() {
@@ -8,7 +8,7 @@ void ContainerManager::loadFromDisk() {
                 "Buffer allocation assumes max container count is less than 999..."
                 "also that's a lot of containers.");
   if (!SPIFFS.exists(dbPath)) {
-    debugE("No container.db defined on load.");
+   // debugE("No container.db defined on load.");
     return;
   }
 
@@ -19,61 +19,60 @@ void ContainerManager::loadFromDisk() {
 
   auto dbBuffer = std::make_unique<unsigned char[]>(dbSize);
   auto read = containerDb.read(dbBuffer.get(), dbSize);
-  debugV("Read %d bytes of %d from container DB", read, dbSize);
+ // debugV("Read %d bytes of %d from container DB", read, dbSize);
   containerDb.close();
-  DynamicJsonDocument doc(dbSize);
+ // DynamicJsonDocument doc(dbSize);
 
-  deserializeJson(doc, dbBuffer.get(), dbSize);
+ // deserializeJson(doc, dbBuffer.get(), dbSize);
 
-  JsonObject containers = doc[jsonContainerKey];
-  uint32_t version = doc[jsonVersionKey];
-  if (version != Container::currentVersion) {
-    debugE("Version saved to disk does not match current version, disk(%d) current(%d)",
-           version,
-           Container::currentVersion);
+ // JsonObject containers = doc[jsonContainerKey];
+ // uint32_t version = doc[jsonVersionKey];
+  //if (version != Container::currentVersion) {
+  //  debugE("Version saved to disk does not match current version, disk(%d) current(%d)",
+  //         version,
+  //         Container::currentVersion);
     //todo: Manage migrations
-  }
+//  }
 
   for (int index = 0; index < config::physical::containerCount; index++) {
-    JsonObject serialized = containers[String(index)];
-    if (serialized.isNull()) {
-      debugV("No container saved found %d", index);
-      hasContent[index] = false;
-      continue;
+   // JsonObject serialized = containers[String(index)];
+//    if (serialized.isNull()) {
+   //   debugV("No container saved found %d", index);
+    //  continue;
     }
-    debugV("Found saved container %d", index);
+  //  debugV("Found saved container %d", index);
 
-    Container content;
-    content.deserializeFrom(serialized);
-    containerContents[index] = content;
-    hasContent[index] = true;
-  }
+  //  Container content;
+  //  content.deserializeFrom(serialized);
+  //  containerContents.insert(ContainerMap::value_type(index, content));
+  //}
 }
 
 void ContainerManager::writeToDisk() {
-  DynamicJsonDocument doc(maxContainerDBSize);
-  auto root = doc.as<JsonObject>();
+ // DynamicJsonDocument doc(maxContainerDBSize);
 
-  root[jsonVersionKey] = Container::currentVersion;
+ // doc[jsonVersionKey] = Container::currentVersion;
 
-  JsonObject containers = root.createNestedObject(jsonContainerKey);
-  for (int index = 0; index < config::physical::containerCount; index++) {
-    if (!hasContent[index]) {
-      containers[String(index)] = nullptr;
-      continue;
-    }
-    JsonObject container = containers.createNestedObject(String(index));
-    containerContents[index].serializeInto(container);
-    containers[String(index)] = container;
-  }
-  size_t docSize = measureJson(doc);
+//  JsonObject containers = doc.createNestedObject(jsonContainerKey);
+//  for (int index = 0; index < config::physical::containerCount; index++) {
+//    if (!containerContents.count(index)) {
+//      containers[String(index)] = nullptr;
+//      continue;
+//    }
+//    JsonObject container = containers.createNestedObject(String(index));
+//    containerContents[index].serializeInto(container);
+//    containers[String(index)] = container;
+//  }
+//  size_t docSize = measureJson(doc);
+//
+//  char jsonBuffer[docSize];
+//  serializeJson(doc, jsonBuffer, docSize);
+//
+//  serializeJson(doc,Serial);
+//  updateDbFile(jsonBuffer, docSize);
 
-  char jsonBuffer[docSize];
-  serializeJson(doc, jsonBuffer, docSize);
+ // debugV("Container definition size written to disk: %d Keys: %d", docSize, doc.size());
 
-  updateDbFile(jsonBuffer, docSize);
-
-  debugV("Container definition size written to disk: %d", docSize);
 }
 
 void ContainerManager::updateDbFile(char *buffer, size_t length) {

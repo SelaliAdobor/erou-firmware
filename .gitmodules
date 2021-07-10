@@ -55,3 +55,9 @@
 [submodule "components/external-libraries/croncpp"]
 	path = components/external-libraries/croncpp
 	url = git@github.com:SelaliAdobor/croncpp.git
+[submodule "components/external-libraries/ezTime"]
+	path = components/external-libraries/ezTime
+	url = git@github.com:ropg/ezTime.git
+[submodule "components/external-libraries/etl"]
+	path = components/external-libraries/etl
+	url = git@github.com:ETLCPP/etl.git

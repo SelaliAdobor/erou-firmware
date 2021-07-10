@@ -16,7 +16,7 @@
 #include <inttypes.h>
 #include <chrono>
 #include <croncpp.h>
-
+#include <ezTime.h>
 #include "esp_sntp.h"
 
 
@@ -34,26 +34,33 @@ void setupDebugCommands();
 void setupWebServer();
 void setupDebug();
 
+Timezone LocalTimezone;
 [[noreturn]]  void secondaryLoopTask(void *) {
   for (;;) {
-    delay(5000);
+    delay(1000);
+    events();
+    LocalTimezone.setLocation("America/New_York");
+    debugI("Current time: %s", LocalTimezone.dateTime().c_str());
+
     auto cron = cron::make_cron("0 0/5 * * * ?");
     struct timeval tv_now;
     gettimeofday(&tv_now, NULL);
-    setenv("EST+5EDT,M3.2.0/2,M11.1.0/2");
     char text[100];
     char textNext[100];
     struct tm *t = localtime(&tv_now.tv_sec);
 
 
     strftime(text, sizeof(text)-1, "%d %m %Y %H:%M", t);
-    std::time_t now =tv_now.tv_sec;
+    std::time_t now = LocalTimezone.now();
 
     std::time_t next = cron::cron_next(cron.value(), now);
+    std::time_t secondsTil = next - now;
+    long seconds = secondsTil % 60;
+    long minutes = (secondsTil / 60) % 60;
+    long hours = secondsTil / 3600;
 
-    struct tm *nt = localtime(&next);
-    strftime(textNext, sizeof(textNext)-1, "%d %m %Y %H:%M", nt);
-    debugI("Now %s Next %s", text, textNext );
+
+    debugI("Now %d %s Next %s Remaining %2ld hours %2ld minutes %2ld seconds",touchRead(4), LocalTimezone.dateTime(now, "d m Y H:M").c_str(), LocalTimezone.dateTime(next, "d m Y H:M").c_str(), hours, minutes, seconds );
   }
 }
 
