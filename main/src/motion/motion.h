@@ -8,7 +8,6 @@
 #include <TMCStepper.h>
 #include <memory>
 #include <utility>
-#include <FlexyStepper.h>
 
 //Convert acceleration in revolutions to steps
 inline float rAccelTosAccel(float rAccel) {

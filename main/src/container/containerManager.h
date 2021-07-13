@@ -1,6 +1,5 @@
 #pragma once
 #include "containerManager.h"
-//include "ArduinoJson.h"
 #include "container.h"
 #include "config_constants.h"
 #include "etl/unordered_map.h"
@@ -13,7 +12,7 @@ class ContainerManager {
   ContainerMap containerContents;
   static const size_t maxContainerDBSize = 8048;
 
-  void updateDbFile(char *buffer, size_t length);
+  void updateDbFile(const char *buffer, size_t length);
   static constexpr const char* jsonContainerKey ="container";
   static constexpr const char* jsonVersionKey = "version";
 

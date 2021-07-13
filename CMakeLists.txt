@@ -6,6 +6,6 @@ include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 set (CMAKE_CXX_STANDARD 17)
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17")
 
-idf_build_set_property(CXX_COMPILE_OPTIONS "-std=gnu++17" APPEND)
+idf_build_set_property(CXX_COMPILE_OPTIONS "-std=gnu++17" "-Os" APPEND)
 set_target_properties(${COMPONENT_TARGET} PROPERTIES LINK_INTERFACE_MULTIPLICITY 10)
 project(erou-firmware-esp32)

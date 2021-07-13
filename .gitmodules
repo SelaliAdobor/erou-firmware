@@ -1,63 +1,27 @@
-[submodule "components/external-libraries/TMCStepper"]
-	path = components/external-libraries//TMCStepper
-	url = https://github.com/teemuatlut/TMCStepper.git
-[submodule "components/external-libraries/AccelStepper"]
-	path = components/external-libraries/AccelStepper
-	url = https://github.com/waspinator/AccelStepper.git
-[submodule "components/external-libraries/StepperDriver"]
-	path = components/external-libraries/StepperDriver
-	url = https://github.com/laurb9/StepperDriver.git
-[submodule "components/external-libraries/AsyncTCP"]
-	path = components/external-libraries/AsyncTCP
-	url = https://github.com/me-no-dev/AsyncTCP.git
-[submodule "components/external-libraries/MPMCQueue"]
-	path = lib/MPMCQueue
-	url = https://github.com/rigtorp/MPMCQueue.git
-[submodule "components/external-libraries/moodycamel-queue-esp32"]
-	path = components/external-libraries/moodycamel-queue-esp32
-	url = git@github.com:SelaliAdobor/moodycamel-queue-esp32.git
-[submodule "components/external-libraries/fmt-esp32"]
-	path = components/external-libraries/fmt-esp32
-	url = git@github.com:SelaliAdobor/fmt-esp32.git
-[submodule "components/external-libraries/arduinoWebSockets"]
-	path = components/external-libraries/arduinoWebSockets
-	url = git@github.com:Links2004/arduinoWebSockets.git
-[submodule "components/arduino"]
-	path = components/arduino
-	url = git@github.com:espressif/arduino-esp32.git
-[submodule "components/external-libraries/ESPAsyncWebServer"]
-	path = components/external-libraries/ESPAsyncWebServer
-	url = git@github.com:SelaliAdobor/ESPAsyncWebServer.git
-[submodule "components/external-libraries/FlexyStepper"]
-	path = components/external-libraries/FlexyStepper
-	url = git@github.com:Stan-Reifel/FlexyStepper.git
-[submodule "components/external-libraries/espsoftwareserial"]
-	path = components/external-libraries/espsoftwareserial
-	url = git@github.com:plerup/espsoftwareserial.git
 [submodule "components/external-libraries/ESP-FlexyStepper"]
 	path = components/external-libraries/ESP-FlexyStepper
 	url = git@github.com:pkerspe/ESP-FlexyStepper.git
-[submodule "components/external-libraries/utf8proc"]
-	path = components/external-libraries/utf8proc
-	url = git@github.com:JuliaStrings/utf8proc.git
-[submodule "components/external-libraries/Effortless-SPIFFS"]
-	path = components/external-libraries/Effortless-SPIFFS
-	url = git@github.com:thebigpotatoe/Effortless-SPIFFS.git
-[submodule "components/external-libraries/constexpr-to-string"]
-	path = components/external-libraries/constexpr-to-string
-	url = git@github.com:tcsullivan/constexpr-to-string.git
-[submodule "components/external-libraries/binn"]
-	path = components/external-libraries/binn
-	url = git@github.com:liteserver/binn.git
-[submodule "components/ArduinoJson"]
-	path = components/ArduinoJson
-	url = git@github.com:bblanchon/ArduinoJson.git
-[submodule "components/external-libraries/croncpp"]
-	path = components/external-libraries/croncpp
-	url = git@github.com:SelaliAdobor/croncpp.git
-[submodule "components/external-libraries/ezTime"]
-	path = components/external-libraries/ezTime
-	url = git@github.com:ropg/ezTime.git
-[submodule "components/external-libraries/etl"]
-	path = components/external-libraries/etl
+[submodule "components/external-libraries/TMCStepper"]
+	path = components/external-libraries/TMCStepper
+	url = git@github.com:teemuatlut/TMCStepper.git
+[submodule "components/arduino-esp32"]
+	path = components/arduino-esp32
+	url = git@github.com:espressif/arduino-esp32.git
+[submodule "main/lib/ESPAsyncWebServer"]
+	path = components/external-libraries/ESPAsyncWebServer
+	url = git@github.com:SelaliAdobor/ESPAsyncWebServer.git
+[submodule "main/lib/AsyncTCP"]
+	path = components/external-libraries/AsyncTCP
+	url = git@github.com:me-no-dev/AsyncTCP.git
+[submodule "main/lib/fmt-esp32"]
+	path = components/fmt-esp32
+	url = git@github.com:SelaliAdobor/fmt-esp32.git
+[submodule "main/lib/croncpp"]
+	path = main/lib/croncpp
+	url = git@github.com:mariusbancila/croncpp.git
+[submodule "main/lib/json11"]
+	path = main/lib/json11
+	url = git@github.com:dropbox/json11.git
+[submodule "main/lib/etl"]
+	path = main/lib/etl
 	url = git@github.com:ETLCPP/etl.git

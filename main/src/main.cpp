@@ -13,12 +13,10 @@
 #include "pins.h"
 #include <bitset>
 #include <containerManager.h>
-#include <inttypes.h>
+#include <cinttypes>
 #include <chrono>
 #include <croncpp.h>
-#include <ezTime.h>
 #include "esp_sntp.h"
-
 
 TMC2130Stepper driver(pins::stepper::cs);
 
@@ -34,33 +32,12 @@ void setupDebugCommands();
 void setupWebServer();
 void setupDebug();
 
-Timezone LocalTimezone;
 [[noreturn]]  void secondaryLoopTask(void *) {
   for (;;) {
     delay(1000);
-    events();
-    LocalTimezone.setLocation("America/New_York");
-    debugI("Current time: %s", LocalTimezone.dateTime().c_str());
-
-    auto cron = cron::make_cron("0 0/5 * * * ?");
-    struct timeval tv_now;
-    gettimeofday(&tv_now, NULL);
-    char text[100];
-    char textNext[100];
-    struct tm *t = localtime(&tv_now.tv_sec);
 
 
-    strftime(text, sizeof(text)-1, "%d %m %Y %H:%M", t);
-    std::time_t now = LocalTimezone.now();
-
-    std::time_t next = cron::cron_next(cron.value(), now);
-    std::time_t secondsTil = next - now;
-    long seconds = secondsTil % 60;
-    long minutes = (secondsTil / 60) % 60;
-    long hours = secondsTil / 3600;
-
-
-    debugI("Now %d %s Next %s Remaining %2ld hours %2ld minutes %2ld seconds",touchRead(4), LocalTimezone.dateTime(now, "d m Y H:M").c_str(), LocalTimezone.dateTime(next, "d m Y H:M").c_str(), hours, minutes, seconds );
+  //  debugI("Now %d %s Next %s Remaining %2ld hours %2ld minutes %2ld seconds",touchRead(4), LocalTimezone.dateTime(now, "d m Y H:M").c_str(), LocalTimezone.dateTime(next, "d m Y H:M").c_str(), hours, minutes, seconds );
   }
 }
 
@@ -182,7 +159,7 @@ void setupWebServer() {
     Container content = {
         .name =  std::string(nameParam->value().c_str()),
         .description = std::string(descriptionParam->value().c_str()),
-        .quantity = static_cast<uint32_t>(quantityParam->value().toInt()),
+        .quantity = static_cast<int>(quantityParam->value().toInt()),
         .cron = std::string(cronParam->value().c_str()),
     };
 

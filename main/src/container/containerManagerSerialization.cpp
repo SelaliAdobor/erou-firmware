@@ -1,9 +1,10 @@
 #include "containerManager.h"
-//#include "wsdebug.h"
-//#include "ArduinoJson.h"
+#include "wsdebug.h"
+#include "json11.hpp"
 #include "SPIFFS.h"
 
 void ContainerManager::loadFromDisk() {
+  using JsonObject = json11::Json::object;
   static_assert(config::physical::containerCount < 999,
                 "Buffer allocation assumes max container count is less than 999..."
                 "also that's a lot of containers.");
@@ -19,63 +20,68 @@ void ContainerManager::loadFromDisk() {
 
   auto dbBuffer = std::make_unique<unsigned char[]>(dbSize);
   auto read = containerDb.read(dbBuffer.get(), dbSize);
- // debugV("Read %d bytes of %d from container DB", read, dbSize);
+  // debugV("Read %d bytes of %d from container DB", read, dbSize);
   containerDb.close();
- // DynamicJsonDocument doc(dbSize);
+  std::string error;
+  auto doc = json11::Json::parse(reinterpret_cast<const char *>(dbBuffer.get()), error);
 
- // deserializeJson(doc, dbBuffer.get(), dbSize);
-
- // JsonObject containers = doc[jsonContainerKey];
- // uint32_t version = doc[jsonVersionKey];
-  //if (version != Container::currentVersion) {
-  //  debugE("Version saved to disk does not match current version, disk(%d) current(%d)",
-  //         version,
-  //         Container::currentVersion);
+  JsonObject containers = doc[jsonContainerKey].object_items();
+  int version = doc[jsonVersionKey].int_value();
+  if (version != Container::currentVersion) {
+   // debugE("Version saved to disk does not match current version, disk(%d) current(%d)",
+   //        version,
+    //       Container::currentVersion);
     //todo: Manage migrations
-//  }
+  }
 
   for (int index = 0; index < config::physical::containerCount; index++) {
-   // JsonObject serialized = containers[String(index)];
-//    if (serialized.isNull()) {
-   //   debugV("No container saved found %d", index);
-    //  continue;
-    }
-  //  debugV("Found saved container %d", index);
 
-  //  Container content;
-  //  content.deserializeFrom(serialized);
-  //  containerContents.insert(ContainerMap::value_type(index, content));
-  //}
+    char indexString[5];
+    static_assert(config::physical::containerCount < 999, "Serialization assumes a reasonable number of containers.");
+
+    itoa(config::physical::containerCount, indexString, 10);
+    if (containers[indexString].is_null()) {
+ //     debugV("No container saved found %d", index);
+      continue;
+    }
+
+    JsonObject serialized = containers[indexString].object_items();
+    //debugV("Found saved container %d", index);
+
+    Container content;
+    content.deserializeFrom(serialized);
+    containerContents.insert(ContainerMap::value_type(index, content));
+  }
 }
 
 void ContainerManager::writeToDisk() {
- // DynamicJsonDocument doc(maxContainerDBSize);
+  using JsonObject = json11::Json::object;
+  JsonObject doc = JsonObject{{jsonVersionKey, Container::currentVersion}};
 
- // doc[jsonVersionKey] = Container::currentVersion;
+  auto containers = JsonObject{};
+  char indexString[5];
+  static_assert(config::physical::containerCount < 999, "Serialization assumes a reasonable number of containers.");
 
-//  JsonObject containers = doc.createNestedObject(jsonContainerKey);
-//  for (int index = 0; index < config::physical::containerCount; index++) {
-//    if (!containerContents.count(index)) {
-//      containers[String(index)] = nullptr;
-//      continue;
-//    }
-//    JsonObject container = containers.createNestedObject(String(index));
-//    containerContents[index].serializeInto(container);
-//    containers[String(index)] = container;
-//  }
-//  size_t docSize = measureJson(doc);
-//
-//  char jsonBuffer[docSize];
-//  serializeJson(doc, jsonBuffer, docSize);
-//
-//  serializeJson(doc,Serial);
-//  updateDbFile(jsonBuffer, docSize);
+  for (int index = 0; index < config::physical::containerCount; index++) {
+    itoa(config::physical::containerCount, indexString, 10);
 
- // debugV("Container definition size written to disk: %d Keys: %d", docSize, doc.size());
+    if (!containerContents.count(index)) {
+      containers.insert({indexString, nullptr});
+      continue;
+    }
+    JsonObject serializedContainer = JsonObject{};
+    containerContents[index].serializeInto(serializedContainer);
+    containers.insert({indexString, serializedContainer});
+  }
+  doc.insert({jsonContainerKey, containers});
+  std::string docToString = json11::Json(doc).dump();
+  updateDbFile(docToString.c_str(), docToString.length() + 1);
+
+ // debugV("Container definition size written to disk: %s", docToString);
 
 }
 
-void ContainerManager::updateDbFile(char *buffer, size_t length) {
+void ContainerManager::updateDbFile(const char *buffer, size_t length) {
   static const char *writeMode = "w+";
 
   File file = SPIFFS.open(dbTempPath, writeMode);

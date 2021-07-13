@@ -4,23 +4,22 @@ from os.path import join
 
 libDir = "./components/external-libraries"
 srcFiles = []
-srcExclusions = [
+includeRoots = [
     f'ESPAsyncWebServer/extras',
-    f'ESPAsyncWebServer/examples',
-    "binn/examples",
-    "binn/conversions",
-    "binn/src/win32",
-    "binn/test",
-    "build",
-    "croncpp/benchmark"
-    , "croncpp/catch"
-    , "croncpp/res",
-    "croncpp/test",
+]
+libraryRequires = [
+    "arduino-esp32",
 ]
 
 # Special case for fmt::fmt since it requires including parent dir
 includeDirs = ["fmt-esp32"]
-includeExclusions = ["fmt-esp32/fmt"]
+srcRoots = [
+    "TMCStepper/src",
+    "fmt-esp32/fmt",
+    "ESP-FlexyStepper/src",
+    "AsyncTCP/src",
+    "ESPAsyncWebServer/src",
+]
 
 print(f'{libDir}/**')
 
@@ -30,22 +29,22 @@ for ext in ('*.c', '*.cpp', '*.cc', '*.cxx'):
 for ext in ('*.h', '*.hpp'):
     includeDirs.extend(map(lambda path: os.path.relpath(os.path.dirname(path), libDir),
                            glob(join(f'{libDir}/**/*', ext), recursive=True)))
-
 includeDirs = (list(set(includeDirs)))
 
-includeDirs = filter(lambda i: list(filter(i.startswith, includeExclusions)) == [], includeDirs)
-srcFiles = filter(lambda i: list(filter(i.startswith, srcExclusions)) == [], srcFiles)
+includeDirs = filter(lambda i: list(filter(i.startswith, srcRoots)) != [], includeDirs)
+srcFiles = filter(lambda i: list(filter(i.startswith, srcRoots)) != [], srcFiles)
 
 print(srcFiles)
 print(includeDirs)
 
 srcFilesFormatted = " ".join(f'"{s}"' for s in srcFiles)
 includeDirsFormatted = " ".join(f'"{i}"' for i in includeDirs)
+libraryRequiresFormatted = " ".join(f'"{i}"' for i in libraryRequires)
 
 cmakeContent = "idf_component_register(\n"
 cmakeContent += f'  SRCS {srcFilesFormatted}\n'
 cmakeContent += f'  INCLUDE_DIRS {includeDirsFormatted}\n'
-cmakeContent += f'  REQUIRES arduino\n'
+cmakeContent += f'  REQUIRES {libraryRequiresFormatted}\n'
 cmakeContent += f')'
 cmakeContent += "\n"
 cmakeContent += "set_target_properties(${COMPONENT_TARGET} PROPERTIES LINK_INTERFACE_MULTIPLICITY 3)"

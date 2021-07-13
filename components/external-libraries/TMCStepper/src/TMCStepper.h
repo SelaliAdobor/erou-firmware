@@ -1006,7 +1006,6 @@ class TMC2208Stepper : public TMCStepper {
 		void preReadCommunication();
 		int16_t serial_read();
 		uint8_t serial_write(const uint8_t data);
-		uint8_t serial_write(const char *data, const int length);
 		void postWriteCommunication();
 		void postReadCommunication();
 		void write(uint8_t, uint32_t);
@@ -1015,7 +1014,7 @@ class TMC2208Stepper : public TMCStepper {
 		uint8_t calcCRC(uint8_t datagram[], uint8_t len);
 		static constexpr uint8_t  TMC2208_SYNC = 0x05,
 															TMC2208_SLAVE_ADDR = 0x00;
-		static constexpr uint8_t replyDelay = 0;
+		static constexpr uint8_t replyDelay = 2;
 		static constexpr uint8_t abort_window = 5;
 		static constexpr uint8_t max_retries = 2;
 
