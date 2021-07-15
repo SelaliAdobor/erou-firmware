@@ -16,12 +16,18 @@
 [submodule "main/lib/fmt-esp32"]
 	path = components/fmt-esp32
 	url = git@github.com:SelaliAdobor/fmt-esp32.git
-[submodule "main/lib/croncpp"]
-	path = main/lib/croncpp
-	url = git@github.com:mariusbancila/croncpp.git
 [submodule "main/lib/json11"]
 	path = main/lib/json11
 	url = git@github.com:dropbox/json11.git
 [submodule "main/lib/etl"]
 	path = main/lib/etl
 	url = git@github.com:ETLCPP/etl.git
+[submodule "components/external-libraries/cJSON"]
+	path = components/external-libraries/cJSON
+	url = git@github.com:DaveGamble/cJSON.git
+[submodule "main/lib/croncpp"]
+	path = main/lib/croncpp
+	url = git@github.com:SelaliAdobor/croncpp.git
+[submodule "components/external-libraries/ESPAsyncWebServer"]
+	path = components/external-libraries/ESPAsyncWebServer
+	url = git@github.com:SelaliAdobor/ESPAsyncWebServer.git

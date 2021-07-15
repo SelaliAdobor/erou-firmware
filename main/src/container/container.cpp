@@ -1,18 +1,35 @@
+#include <wsdebug.h>
 #include "container.h"
 
 #define FIELD_NAME(x) #x
-
-void Container::serializeInto(json11::Json::object &dest) const {
-  dest.insert({FIELD_NAME(name), name});
-  dest.insert({FIELD_NAME(description), description});
-  dest.insert({FIELD_NAME(quantity), quantity});
-  dest.insert({FIELD_NAME(cron), cron});
+void Container::deserializeFrom(StoredSettings store, const char *rootKey) {
+  if (auto storedId = store.getStringF("%s" FIELD_NAME(id), rootKey)) {
+    id = std::string(storedId.value());
+    debugI("id %s", id.c_str());
+  }
+  if (auto storedName = store.getStringF("%s" FIELD_NAME(name), rootKey)) {
+    name = std::string(storedName.value());
+    debugI("name %s", name.c_str());
+  }
+  if (auto storedDescription = store.getStringF("%s" FIELD_NAME(description), rootKey)) {
+    description = *(new std::string(storedDescription.value()));
+   debugI("description %s", description.c_str());
+  }
+  if (auto storedCron = store.getStringF("%s" FIELD_NAME(cron), rootKey)) {
+    cron = std::string(storedCron.value());
+   debugI("cron %s", cron.c_str());
+  }
+  if (auto storedQuantity = store.getIntF("%s" FIELD_NAME(quantity), rootKey)) {
+    quantity = int(storedQuantity.value());
+  }
 }
 
-void Container::deserializeFrom(json11::Json::object object) {
-  name = object.at(FIELD_NAME(name)).string_value();
-  description = object.at(FIELD_NAME(description)).string_value();
-  cron = object.at(FIELD_NAME(cron)).string_value();
-  quantity = object.at(FIELD_NAME(quantity)).int_value();
+void Container::serializeInto(StoredSettings store, const char *rootKey) const {
+  store.setStringF(id.c_str(), "%s" FIELD_NAME(id), rootKey);
+  store.setStringF(name.c_str(), "%s" FIELD_NAME(name), rootKey);
+  store.setStringF(description.c_str(), "%s" FIELD_NAME(description), rootKey);
+  store.setStringF(cron.c_str(), "%s" FIELD_NAME(cron), rootKey);
+  store.setIntF(quantity, "%s" FIELD_NAME(quantity), rootKey);
 }
+
 #undef FIELD_NAME

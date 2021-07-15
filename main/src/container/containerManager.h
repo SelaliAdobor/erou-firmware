@@ -4,6 +4,8 @@
 #include "config_constants.h"
 #include "etl/unordered_map.h"
 
+static const char *const containerEmptyKey = "containers/contents/%s/isEmpty";
+static const char *const containerRootKey = "containers/contents/%s/";
 using ContainerMap = etl::unordered_map<int, Container, config::physical::containerCount>;
 
 //TODO: Refactor to separate container definition from container contents

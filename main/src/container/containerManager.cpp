@@ -11,7 +11,7 @@ std::optional<Container> ContainerManager::getContainerContent(const int contain
     debugE("Attempted to retrieve out of bounds container %d", container);
     return {};
   }
-  if (containerContents.find(container) == containerContents.end()) {
+  if (!containerContents.count(container)) {
     return {};
   }
 
@@ -24,6 +24,7 @@ void ContainerManager::setContainerContent(int container, const Container conten
     return;
   }
   containerContents.insert(ContainerMap::value_type(container, content));
+  writeToDisk();
 }
 
 ContainerManager::ContainerManager() {

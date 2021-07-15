@@ -67,13 +67,10 @@ void setup() {
   pins::setup();
   setupWifi();
   SPIFFS.begin(true);
+  storedSettings.setup();
   Ota::setup();
   setupDebug();
   setupWebServer();
-
-  sntp_setoperatingmode(SNTP_OPMODE_POLL);
-  sntp_setservername(0, "pool.ntp.org");
-  sntp_init();
 
 
   debugI("setting up container manager");
@@ -130,11 +127,16 @@ void setupDebug() {
 }
 void setupWebServer() {
   server.begin();
+  server.on("/reset", HTTP_GET, [](AsyncWebServerRequest *request) {
+    storedSettings.reset();
+    request->send(200, "text/plain", "Stored Settings Cleared.");
+  });
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, "text/plain", "Hello, world");
   });
   server.on("/containers", HTTP_POST, [](AsyncWebServerRequest *request) {
     bool missingField = false;
+    missingField &= !request->hasParam("id", true);
     missingField &= !request->hasParam("name", true);
     missingField &= !request->hasParam("index", true);
     missingField &= !request->hasParam("description", true);
@@ -151,12 +153,14 @@ void setupWebServer() {
     if (index > config::physical::containerCount) {
       request->send(500, "text/plain", "Exceeded container count");
     }
+    auto *idParam = request->getParam("id", true);
     auto *nameParam = request->getParam("name", true);
     auto *descriptionParam = request->getParam("description", true);
     auto *quantityParam = request->getParam("quantity", true);
     auto *cronParam = request->getParam("cron", true);
 
     Container content = {
+        .id =  std::string(idParam->value().c_str()),
         .name =  std::string(nameParam->value().c_str()),
         .description = std::string(descriptionParam->value().c_str()),
         .quantity = static_cast<int>(quantityParam->value().toInt()),
@@ -164,7 +168,6 @@ void setupWebServer() {
     };
 
     contentManager.setContainerContent(static_cast<int>(index), content);
-    contentManager.writeToDisk();
     AsyncResponseStream *response = request->beginResponseStream("text/html");
 
     response->printf("name: %s\n", content.name.c_str());

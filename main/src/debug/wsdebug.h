@@ -35,7 +35,7 @@ enum DebugLevel {
 
 class Debug {
  private:
-  const int maxMessagesInQueue = 500;
+  const int maxMessagesInQueue = 50;
 
   QueueHandle_t messageQueue = nullptr;
   QueueHandle_t commandQueue = nullptr;
@@ -83,7 +83,8 @@ class Debug {
   };
   FMT_VARIADIC(void, printV, fmt::CStringRef)
 
-  void printI(fmt::CStringRef format, fmt::ArgList args) {
+
+  inline void printI(fmt::CStringRef format, fmt::ArgList args)  {
     printMessage(DebugLevel::Info, std::move(format), std::move(args));
   };
   FMT_VARIADIC(void, printI, fmt::CStringRef)

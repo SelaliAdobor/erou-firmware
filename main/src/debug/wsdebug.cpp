@@ -65,6 +65,8 @@ void Debug::printMessage(DebugLevel level, fmt::CStringRef format,
       level,
       formattedString,
   };
+  Serial.println(message->content.c_str());
+  Serial.flush();
   xQueueSend(messageQueue, &message, pdMS_TO_TICKS(5));
 
 }
@@ -121,8 +123,6 @@ void stripUnicode(std::string &str) {
   for (;;) {
     if (xQueueReceive(messageQueue, &queueMessage, portMAX_DELAY)) {
       auto message = std::unique_ptr<DebugMessage>(queueMessage);
-
-      Serial.println(message->content.c_str());
 
       if (message->level >= loggingLevel) {
         stripUnicode(message->content);

@@ -8,6 +8,7 @@
 #include <TMCStepper.h>
 #include <memory>
 #include <utility>
+#include <storedSettings.h>
 #include "json11.hpp"
 class Container {
  public:
@@ -17,10 +18,11 @@ class Container {
   static const uint32_t maxDescriptionLength = 512;
   static const uint32_t maxCronLength = 20;
 
+  std::string id;
   std::string name;
   std::string description;
   int quantity;
   std::string cron;
-  void serializeInto(json11::Json::object& destination) const;
-  void deserializeFrom(json11::Json::object source);
+  void serializeInto(StoredSettings store, const char* rootKey) const ;
+  void deserializeFrom(StoredSettings store,const char* rootKey) ;
 };
