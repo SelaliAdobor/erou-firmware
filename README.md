@@ -1,6 +1,10 @@
 # Erou Firmware 
 
-(working title)
+
+https://user-images.githubusercontent.com/17497673/126010837-754fd2a0-2dfa-4c3f-a33e-fe7cec537631.mov
+
+
+(working title, latest hardware uses Trinamic stepper drivers for near-silent operation)
 
 Erou is a secure IoT enabled pill dispenser, and this is the firmware for it.
 
