@@ -16,19 +16,23 @@
 #include <cinttypes>
 #include <chrono>
 #include <croncpp.h>
+#include <api.h>
 #include "esp_sntp.h"
+#include "commands.h"
 
 TMC2130Stepper driver(pins::stepper::cs);
 
 ESP_FlexyStepper stepper;
-Ota *ota;
 
 Motion motion = Motion(&driver, &stepper); // NOLINT(cppcoreguidelines-slicing)
 AsyncWebServer server(80);
-ContainerManager contentManager = ContainerManager(&storedSettings);
+ContainerManager containerManager = ContainerManager(&storedSettings);
+Api api = Api(&containerManager);
+
 void setupDebugCommands();
 
 #include <TMC2130_bitfields.h>
+#include <requestUtil.h>
 void setupWebServer();
 void setupDebug();
 
@@ -79,7 +83,7 @@ void setup() {
   setupWebServer();
 
   debugI("setting up container manager");
-  contentManager.setup();
+  containerManager.setup();
 
   debugI("setting up motion");
   motion.setup();
@@ -98,45 +102,21 @@ void setup() {
 }
 void setupDebug() {
   debugInstance.setup(server);
-  debugInstance.registerCommand("en ", [](const std::string *args) {
-    uint8_t enabled = 0;
-    if (sscanf(args->c_str(), "%" SCNu8, &enabled) != 1) {
-      debugI("Failed to parse command.");
-      return;
-    }
-
-    digitalWrite(pins::stepper::enable, !enabled);
-    debugI("Updated stepper motor enabled state %d", enabled);
-  });
-  debugInstance.registerCommand("gtc ", [](const std::string *args) {
-    int containerIndex = 0;
-
-    if (sscanf(args->c_str(), "%d", &containerIndex) != 1) {
-      debugI("Failed to parse command.");
-      return;
-    }
-
-    debugI("Going to container %d for debug command", containerIndex);
-    if (containerIndex >= config::physical::containerCount) {
-      debugE(
-          "Container index exceeded for goToContainer: %d out of %d possible",
-          containerIndex, config::physical::containerCount);
-      return;
-    }
-    motion.goToContainerAt(containerIndex);
-    debugI("Went to container %d after debug command", containerIndex);
-  });
-  debugInstance.registerCommand("ut", [](const std::string *) {
-    debugI("%d seconds since last reboot", int (esp_timer_get_time() / 1000000));
-  });
+  DebugCommands::setup(&motion);
 }
+
 void setupWebServer() {
   server.begin();
   server.on("/reset", HTTP_GET, [](AsyncWebServerRequest *request) {
     storedSettings.reset();
-    request->send(200, "text/plain", "Stored Settings Cleared.");
+    auto* response = cJSON_CreateObject();
+    cJSON_AddBoolToObject(response, "clearedSettings", 1);
+    replyWithJson(request, 200, response);
   });
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(200, "text/plain", "Hello, world");
+    auto* response = cJSON_CreateObject();
+    cJSON_AddBoolToObject(response, "helloWorld", 1);
+    replyWithJson(request, 200, response);
   });
+  api.setup(server);
 }

@@ -34,7 +34,7 @@ class ContainerManager {
   std::optional<Container> getContainerContent(int container);
   void setContainerContent(int container, Container content);
   ContainerMap getAllLoadedContainers();
-  std::optional<etl::pair<int, Container>>  getById(std::string id);
+  std::optional<etl::pair<int, Container>>  getById(ShortString id);
   void setup();
 
   void loadFromDisk();

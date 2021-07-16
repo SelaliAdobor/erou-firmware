@@ -14,6 +14,7 @@
     <mapping directory="$PROJECT_DIR$/components/external-libraries/TMCStepper" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/external-libraries/arduinoWebSockets" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/external-libraries/binn" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/components/external-libraries/cJSON" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/external-libraries/constexpr-to-string" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/external-libraries/croncpp" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/external-libraries/espsoftwareserial" vcs="Git" />
@@ -22,6 +23,8 @@
     <mapping directory="$PROJECT_DIR$/components/external-libraries/json11" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/external-libraries/moodycamel-queue-esp32" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/fmt-esp32" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/main/lib/croncpp" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/main/lib/etl" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/main/lib/json11" vcs="Git" />
   </component>
 </project>

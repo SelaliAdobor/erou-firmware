@@ -14,22 +14,22 @@ void Dispense::serializeInto(StoredSettings *store, const char *rootKey) const {
 
 void Dispense::deserializeFrom(StoredSettings *store, const char *rootKey) {
   if (auto storedId = store->getStringF("%s" FIELD_NAME(id), rootKey)) {
-    id = std::string(*storedId);
+    id = ShortString(*storedId);
     debugI("id %s", id.c_str());
   }
   if (auto storedName = store->getStringF("%s" FIELD_NAME(name), rootKey)) {
-    name = std::string(*storedName);
+    name = ShortString(*storedName);
     debugI("name %s", name.c_str());
   }
   if (auto storedCron = store->getStringF("%s" FIELD_NAME(cronSchedule), rootKey)) {
-    cronSchedule = std::string(*storedCron);
+    cronSchedule = ShortString(*storedCron);
     debugI("cron %s", name.c_str());
   }
   if (auto countainerCount = store->getIntF("%s" "containerCount", rootKey)) {
     containerIds = ContainerIdList(*countainerCount);
     for (int i = 0; i < *countainerCount; i++) {
       if (auto containerId = store->getStringF("%s" "containerId-%d", rootKey, i)) {
-        containerIds[i] = std::string(*containerId);
+        containerIds[i] = ShortString(*containerId);
         debugI("container ID %s", name.c_str());
       }
     }
@@ -39,7 +39,7 @@ void Dispense::deserializeFrom(StoredSettings *store, const char *rootKey) {
 #undef FIELD_NAME
 
 double Dispense::secondsUntil(tm startingTime) {
-  auto cron = cron::make_cron(cronSchedule);
+  auto cron = cron::make_cron(cronSchedule.c_str());
   tm next = cron::cron_next(cron.value(), startingTime);
   time_t nowT = mktime(&startingTime);
   time_t nextT = mktime(&next);

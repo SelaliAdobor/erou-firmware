@@ -10,11 +10,13 @@
 #include <string>
 #include <vector>
 #include <AsyncTCP.h>
+#include <etl_types.h>
 #include "ESPAsyncWebServer.h"
 
 #include "config_constants.h"
 #include "freertos/stream_buffer.h"
 #include "fmt/format.h"
+#include "debugCommand.h"
 
 #define debugV(fmt, ...)\
   debugInstance.printV("(%-25s)(%-50s)(C%d) " fmt, __FILE__, __PRETTY_FUNCTION__, \
@@ -33,24 +35,17 @@ enum DebugLevel {
   Verbose, Info, Error
 };
 
+
 class Debug {
  private:
   const int maxMessagesInQueue = 50;
-
   QueueHandle_t messageQueue = nullptr;
   QueueHandle_t commandQueue = nullptr;
 
   struct DebugMessage {
     DebugLevel level;
-    std::string content;
+    ShortString content;
   };
-
-  struct DebugCommand {
-    std::string name;
-    std::function<void(const std::string *)> run;
-  };
-
-  std::vector<DebugCommand> registeredCommands;
 
   TaskHandle_t messageLoopHandle{};
   TaskHandle_t commandRunnerHandle{};
@@ -72,8 +67,8 @@ class Debug {
   Debug();
 
   DebugLevel loggingLevel = DebugLevel::Verbose;
-  void registerCommand(std::string name,
-                       std::function<void(const std::string *)> run);
+  void registerCommand(ShortString name,
+                       std::function<void(const ShortString *)> run);
   void printMessage(DebugLevel level, fmt::CStringRef format,
                     fmt::ArgList args);
   FMT_VARIADIC(void, printMessage, fmt::CStringRef)

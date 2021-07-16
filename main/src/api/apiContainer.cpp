@@ -15,16 +15,23 @@ void Api::addContainer(AsyncWebServerRequest *request) {
   int64_t index = requestParamAs<int64_t>(request, "index");
 
   if (index > config::physical::containerCount) {
-    replyWithError(request, "exceeded container count");
+   return replyWithError(request, "exceeded container count");
   }
 
   Container content = {
-      .id =  requestParamAs<std::string>(request, "id"),
-      .name =  requestParamAs<std::string>(request, "name"),
-      .description = requestParamAs<std::string>(request, "description"),
+      .id =  requestParamAs<ShortString>(request, "id"),
+      .name =  requestParamAs<ShortString>(request, "name"),
+      .description = requestParamAs<ShortString>(request, "description"),
       .quantity = requestParamAs<int>(request, "quantity"),
   };
 
+  if (content.id.is_truncated()) {
+    return replyWithError(request, "id exceeded max length");
+  }
+
+  if (content.name.is_truncated()) {
+    return replyWithError(request, "name exceeded max length");
+  }
   containerManager->setContainerContent(static_cast<int>(index), content);
 
   auto *response = cJSON_CreateObject();
@@ -63,4 +70,5 @@ void Api::getContainer(AsyncWebServerRequest *request) {
   cJSON_AddNumberToObject(response, "quantity", container->quantity);
   replyWithJson(request, 200, response);
 }
+
 

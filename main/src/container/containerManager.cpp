@@ -36,7 +36,7 @@ void ContainerManager::setup() {
 ContainerMap ContainerManager::getAllLoadedContainers() {
   return containerContents;
 }
-std::optional<etl::pair<int, Container>> ContainerManager::getById(std::string id) {
+std::optional<etl::pair<int, Container>> ContainerManager::getById(ShortString id) {
   for (auto[index, container] : containerContents) {
     if (container.id == id) {
       return etl::pair<int, Container>({index, container});

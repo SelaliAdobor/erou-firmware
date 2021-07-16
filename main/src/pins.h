@@ -1,5 +1,5 @@
 #pragma once
-
+#include "Arduino.h"
 namespace pins {
 const int onboardLed = 2;
 

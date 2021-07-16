@@ -11,7 +11,7 @@ class StoredSettings {
  private:
   std::unique_ptr<cJSON, SafeParseDeleter> json;
 
-  void updateDbFile(const char *buffer, size_t length);
+  static void updateDbFile(const char *buffer, size_t length);
   /**
    * Write process avoids losing data if power is lost
    * 1. Move main DB to backup path

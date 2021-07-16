@@ -55,7 +55,7 @@ void DispenseManager::runDispense(const Dispense &dispense) {
   for (const auto &containerId : dispense.containerIds) {
     auto foundContainer = containerManager->getById(containerId);
     if (!foundContainer.has_value()) {
-      debugE("Attempted to dispense invalid container %s", containerId);
+      debugE("Attempted to dispense invalid container %s", containerId.c_str());
       continue;
     }
     auto[index, container] = foundContainer.value();

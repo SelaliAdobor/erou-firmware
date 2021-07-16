@@ -8,7 +8,7 @@
 #include <TMCStepper.h>
 #include <memory>
 #include <utility>
-
+#include "config_constants.h"
 //Convert acceleration in revolutions to steps
 inline float rAccelTosAccel(float rAccel) {
   return (rAccel * config::stepper::stepsPerRotation * config::stepper::microsteps) / 60.0F;

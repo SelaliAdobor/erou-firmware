@@ -10,6 +10,16 @@ inline std::string requestParamAs<std::string>(AsyncWebServerRequest *request, c
 }
 
 template<>
+inline ShortString requestParamAs<ShortString>(AsyncWebServerRequest *request, const char *param) {
+  return ShortString(request->getParam(param, true)->value().c_str());
+}
+
+template<>
+inline LongString requestParamAs<LongString>(AsyncWebServerRequest *request, const char *param) {
+  return LongString(request->getParam(param, true)->value().c_str());
+}
+
+template<>
 inline int requestParamAs<int>(AsyncWebServerRequest *request, const char *param) {
   return static_cast<int>(request->getParam(param, true)->value().toInt());
 }
@@ -19,7 +29,7 @@ inline int64_t requestParamAs<int64_t>(AsyncWebServerRequest *request, const cha
   return static_cast<int64_t>(request->getParam(param, true)->value().toInt());
 }
 
-inline bool sendErrorIfMissing(AsyncWebServerRequest *request, std::vector<const char *> params) {
+inline bool sendErrorIfMissing(AsyncWebServerRequest *request, const std::vector<const char *>& params) {
   std::vector<const char *> missingParams = std::vector<const char *>(params.size());
   for (const char *param : params) {
     if (!request->hasParam(param, true)) {

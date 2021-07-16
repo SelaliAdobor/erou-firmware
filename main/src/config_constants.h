@@ -63,6 +63,12 @@ const float rpmContainerTravelMax = 50;
 
 const float angleBetweenContainers = 360.0 / physical::containerCount;
 }  // namespace motion
+
+namespace dispense {
+const int taskStack = 8192;
+const int taskPriority = 7;
+const int maxContainersPerDispense = 10;
+}
 }  // namespace config
 
 
