@@ -1,52 +1,49 @@
-# Hello World Example
+# Erou Firmware 
 
-Starts a FreeRTOS task to print "Hello World".
+(working title)
 
-(See the README.md file in the upper level 'examples' directory for more information about examples.)
+Erou is a secure IoT enabled pill dispenser, and this is the firmware for it.
 
-## How to use example
+Written in C++ , requires FreeRTOS and builds with ESP-IDF. 
 
-Follow detailed instructions provided specifically for this example. 
+Firmware attempts to be non-opinionated towards what is being dispensed, 
+which allows it to be used for non-medical purposes. 
 
-Select the instructions depending on Espressif chip installed on your development board:
+Also avoids dependency on external backend services, device needs to be able to operate independantly of any backend service. 
 
-- [ESP32 Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/stable/get-started/index.html)
-- [ESP32-S2 Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/get-started/index.html)
+Matching app should be able to provide configuration via local network.
+
+## How to build
+
+Use `idf.py build`
+
+Requires C++17, included with ESP-IDF 4.x and up
+
+## Project Structure
+
+- `main/src` contains main project code. Some important directories:
+  - `api`: contains HTTP server callbacks
+  - `debug`: a websocket based debug library (TODO: Breakout into standalone library)
+  - `storedSettings`: A generalized SPIFFS backed k-v store 
+  - `motion`: Controls for hardware kinematics
+  - `config_constants.h / pins.h`: Constant values that define device operation
+- `main/lib` contains pure CMake modules. Each one must be added to `main/CmakeLists.txt`
+- `components` contains ESP-IDF compatible modules. 
 
 
-## Example folder contents
-
-The project **hello_world** contains one source file in C language [hello_world_main.c](main/hello_world_main.cpp). The file is located in folder [main](main).
-
-ESP-IDF projects are built using CMake. The project build configuration is contained in `CMakeLists.txt` files that provide set of directives and instructions describing the project's source files and targets (executable, library, or both). 
-
-Below is short explanation of remaining files in the project folder.
-
-```
-├── CMakeLists.txt
-├── example_test.py            Python script used for automated example testing
-├── main
-│   ├── CMakeLists.txt
-│   ├── component.mk           Component make file
-│   └── hello_world_main.c
-├── Makefile                   Makefile used by legacy GNU Make
-└── README.md                  This is the file you are currently reading
-```
 
 For more information on structure and contents of ESP-IDF projects, please refer to Section [Build System](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html) of the ESP-IDF Programming Guide.
 
-## Troubleshooting
+## TODO
 
-* Program upload failure
+- [ ] Audio 
+- [ ] LED indicators
+- [ ] Touch sensor 
 
-    * Hardware connection is not correct: run `idf.py -p PORT monitor`, and reboot your board to see if there are any output logs.
-    * The baud rate for downloading is too high: lower your baud rate in the `menuconfig` menu, and try again.
+## Code Guidelines
 
-## Technical support and feedback
+- Prefer [ETL](https://www.etlcpp.com/) containers and strings
+- Avoid using Arduino APIs, Arduino is mainly included for library dependencies 
+- clang-tidy configuration included in home directory
 
-Please use the following feedback channels:
 
-* For technical queries, go to the [esp32.com](https://esp32.com/) forum
-* For a feature request or bug report, create a [GitHub issue](https://github.com/espressif/esp-idf/issues)
-
-We will get back to you as soon as possible.
