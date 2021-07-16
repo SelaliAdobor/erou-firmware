@@ -5,9 +5,11 @@
 #include <optional>
 #include <functional>
 #include "wsdebug.h"
+#include "cjson_util.h"
+
 class StoredSettings {
  private:
-  cJSON *json;
+  std::unique_ptr<cJSON, SafeParseDeleter> json;
 
   void updateDbFile(const char *buffer, size_t length);
   /**
@@ -32,11 +34,11 @@ class StoredSettings {
   void setString(const char *key, const char *value);
   void setBool(const char *key, bool value);
 
-  std::optional<char *> getString(char *key);
-  std::optional<int> getInt(char *key);
-  std::optional<bool> getBool(char *key);
+  std::optional<char *> getString(const char *key);
+  std::optional<int> getInt(const char *key);
+  std::optional<bool> getBool(const char *key);
 
-  void runTransaction(std::function<void()> transaction);
+  void runTransaction(const std::function<void()>& transaction);
 
   FMT_VARIADIC(void, setIntF, int, fmt::CStringRef)
   inline void setIntF(int value, fmt::CStringRef format, fmt::ArgList args) {

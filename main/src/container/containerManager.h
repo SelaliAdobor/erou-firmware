@@ -13,8 +13,8 @@ class ContainerManager {
  private:
   ContainerMap containerContents;
   static const size_t maxContainerDBSize = 8048;
+  StoredSettings* storedSettings;
 
-  void updateDbFile(const char *buffer, size_t length);
   static constexpr const char* jsonContainerKey ="container";
   static constexpr const char* jsonVersionKey = "version";
 
@@ -29,11 +29,12 @@ class ContainerManager {
   static constexpr const char* dbBackupPath = "/cfg/containers.json.tmp.bak";
 
  public:
-  ContainerManager();
+  ContainerManager(StoredSettings *stored_settings);
 
   std::optional<Container> getContainerContent(int container);
   void setContainerContent(int container, Container content);
   ContainerMap getAllLoadedContainers();
+  std::optional<etl::pair<int, Container>>  getById(std::string id);
   void setup();
 
   void loadFromDisk();

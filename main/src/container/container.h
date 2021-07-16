@@ -22,7 +22,6 @@ class Container {
   std::string name;
   std::string description;
   int quantity;
-  std::string cron;
-  void serializeInto(StoredSettings store, const char* rootKey) const ;
-  void deserializeFrom(StoredSettings store,const char* rootKey) ;
+  void serializeInto(StoredSettings* store, const char* rootKey) const ;
+  void deserializeFrom(StoredSettings* store,const char* rootKey) ;
 };

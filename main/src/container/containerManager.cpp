@@ -27,13 +27,20 @@ void ContainerManager::setContainerContent(int container, const Container conten
   writeToDisk();
 }
 
-ContainerManager::ContainerManager() {
+ContainerManager::ContainerManager(StoredSettings *stored_settings) : storedSettings(stored_settings) {
 }
-
 
 void ContainerManager::setup() {
   loadFromDisk();
 }
 ContainerMap ContainerManager::getAllLoadedContainers() {
   return containerContents;
+}
+std::optional<etl::pair<int, Container>> ContainerManager::getById(std::string id) {
+  for (auto[index, container] : containerContents) {
+    if (container.id == id) {
+      return etl::pair<int, Container>({index, container});
+    }
+  }
+  return {};
 }

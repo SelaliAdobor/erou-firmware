@@ -25,7 +25,7 @@ Ota *ota;
 
 Motion motion = Motion(&driver, &stepper); // NOLINT(cppcoreguidelines-slicing)
 AsyncWebServer server(80);
-ContainerManager contentManager = ContainerManager();
+ContainerManager contentManager = ContainerManager(&storedSettings);
 void setupDebugCommands();
 
 #include <TMC2130_bitfields.h>
@@ -37,7 +37,7 @@ void setupDebug();
     delay(1000);
 
 
-  //  debugI("Now %d %s Next %s Remaining %2ld hours %2ld minutes %2ld seconds",touchRead(4), LocalTimezone.dateTime(now, "d m Y H:M").c_str(), LocalTimezone.dateTime(next, "d m Y H:M").c_str(), hours, minutes, seconds );
+    //  debugI("Now %d %s Next %s Remaining %2ld hours %2ld minutes %2ld seconds",touchRead(4), LocalTimezone.dateTime(now, "d m Y H:M").c_str(), LocalTimezone.dateTime(next, "d m Y H:M").c_str(), hours, minutes, seconds );
   }
 }
 
@@ -46,7 +46,7 @@ void setupWifi() {
   WiFiClass::mode(WIFI_STA);
   // Helps manage wifi tx power
   esp_wifi_set_max_tx_power(34);
-  esp_wifi_set_ps (WIFI_PS_NONE);
+  esp_wifi_set_ps(WIFI_PS_NONE);
   WiFi.begin(ssid, password);
 
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {
@@ -68,10 +68,15 @@ void setup() {
   setupWifi();
   SPIFFS.begin(true);
   storedSettings.setup();
+
+  const char *timezoneSettingsKey = "config/timezone";
+  if (auto storedTimezone = storedSettings.getString(timezoneSettingsKey)) {
+    configTzTime(storedTimezone.value(), config::network::ntpServer);
+  }
+
   Ota::setup();
   setupDebug();
   setupWebServer();
-
 
   debugI("setting up container manager");
   contentManager.setup();
@@ -133,82 +138,5 @@ void setupWebServer() {
   });
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     request->send(200, "text/plain", "Hello, world");
-  });
-  server.on("/containers", HTTP_POST, [](AsyncWebServerRequest *request) {
-    bool missingField = false;
-    missingField &= !request->hasParam("id", true);
-    missingField &= !request->hasParam("name", true);
-    missingField &= !request->hasParam("index", true);
-    missingField &= !request->hasParam("description", true);
-    missingField &= !request->hasParam("startingQuantity", true);
-    missingField &= !request->hasParam("cron", true);
-
-    if (missingField) {
-      request->send(500, "text/plain", "Missing fields");
-      return;
-    }
-
-    int64_t index = request->getParam("index", true)->value().toInt();
-
-    if (index > config::physical::containerCount) {
-      request->send(500, "text/plain", "Exceeded container count");
-    }
-    auto *idParam = request->getParam("id", true);
-    auto *nameParam = request->getParam("name", true);
-    auto *descriptionParam = request->getParam("description", true);
-    auto *quantityParam = request->getParam("quantity", true);
-    auto *cronParam = request->getParam("cron", true);
-
-    Container content = {
-        .id =  std::string(idParam->value().c_str()),
-        .name =  std::string(nameParam->value().c_str()),
-        .description = std::string(descriptionParam->value().c_str()),
-        .quantity = static_cast<int>(quantityParam->value().toInt()),
-        .cron = std::string(cronParam->value().c_str()),
-    };
-
-    contentManager.setContainerContent(static_cast<int>(index), content);
-    AsyncResponseStream *response = request->beginResponseStream("text/html");
-
-    response->printf("name: %s\n", content.name.c_str());
-    response->printf("description: %s\n", content.description.c_str());
-    response->printf("quantity: %" PRIu32 "\n", content.quantity);
-    response->printf("cron: %s\n", content.cron.c_str());
-
-    request->send(response);
-  });
-
-  server.on("/containers/*", HTTP_GET, [](AsyncWebServerRequest *request) {
-    int containerIndex = 0;
-
-    if (sscanf(request->url().c_str(), "/containers/%d", &containerIndex) != 1) {
-      debugE("Failed to parse index %s %d", request->url().c_str(), containerIndex);
-      request->send(500, "text/plain", "Failed to parse container index");
-      return;
-    }
-
-    if (containerIndex > config::physical::containerCount) {
-      request->send(500, "text/plain", "Exceeded container count");
-    }
-
-    auto content = contentManager.getContainerContent(containerIndex);
-    if (!content.has_value()) {
-      request->send(500, "text/plain", "No container found");
-      return;
-    };
-    AsyncResponseStream *response = request->beginResponseStream("text/html");
-
-    debugI("name: %s\n", content->name);
-    debugI("description: %s\n", content->description);
-    debugI("quantity: %" PRId64 "\n", content->quantity);
-    debugI("cron: %s\n", content->cron);
-
-
-    response->printf("name: %s\n", content->name.c_str());
-    response->printf("description: %s\n", content->description.c_str());
-    response->printf("quantity: %" PRIu32 "\n", content->quantity);
-    response->printf("cron: %s\n", content->cron.c_str());
-
-    request->send(response);
   });
 }

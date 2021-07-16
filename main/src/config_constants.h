@@ -10,6 +10,7 @@ namespace physical {
 const int containerCount = 8;
 }
 namespace network {
+const char *const ntpServer = "pool.ntp.org";
 const char *const hostname = "erou";
 const int port = 80;
 }

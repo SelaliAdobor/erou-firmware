@@ -1,19 +1,16 @@
-//
-// Created by Selali Adobor on 7/13/21.
-//
-
 #include <wsdebug.h>
 #include <SPIFFS.h>
+#include <cjson_util.h>
 #include "storedSettings.h"
 
 StoredSettings storedSettings = StoredSettings();
 
 void StoredSettings::setInt(const char *key, int value) {
-  auto *property = cJSON_GetObjectItem(json, key);
+  auto *property = cJSON_GetObjectItem(json.get(), key);
   if (property != nullptr) {
-    cJSON_ReplaceItemInObject(json, key, cJSON_CreateNumber(value));
+    cJSON_ReplaceItemInObject(json.get(), key, cJSON_CreateNumber(value));
   } else {
-    cJSON_AddNumberToObject(json, key, static_cast<int>(value));
+    cJSON_AddNumberToObject(json.get(), key, static_cast<int>(value));
   }
   if (commitOnSet) {
     writeToDisk();
@@ -21,11 +18,11 @@ void StoredSettings::setInt(const char *key, int value) {
 }
 
 void StoredSettings::setString(const char *key, const char *value) {
-  auto *property = cJSON_GetObjectItem(json, key);
+  auto *property = cJSON_GetObjectItem(json.get(), key);
   if (property != nullptr) {
-    cJSON_ReplaceItemInObject(json, key, cJSON_CreateString(value));
+    cJSON_ReplaceItemInObject(json.get(), key, cJSON_CreateString(value));
   } else {
-    cJSON_AddStringToObject(json, key, value);
+    cJSON_AddStringToObject(json.get(), key, value);
   }
   if (commitOnSet) {
     writeToDisk();
@@ -36,8 +33,8 @@ void StoredSettings::setBool(const char *key, bool value) {
   setInt(key, static_cast<int>(value));
 }
 
-std::optional<int> StoredSettings::getInt(char *key) {
-  auto property = cJSON_GetObjectItem(json, key);
+std::optional<int> StoredSettings::getInt(const char *key) {
+  auto *property = cJSON_GetObjectItem(json.get(), key);
   if (property == nullptr || cJSON_IsNull(property)) {
     return {};
   }
@@ -45,19 +42,16 @@ std::optional<int> StoredSettings::getInt(char *key) {
   return static_cast<int>(value);
 }
 
-std::optional<bool> StoredSettings::getBool(char *key) {
-  debugI("Getting bool %s", key);
-  auto property = cJSON_GetObjectItem(json, key);
+std::optional<bool> StoredSettings::getBool(const char *key) {
+  auto *property = cJSON_GetObjectItem(json.get(), key);
   if (property == nullptr || cJSON_IsNull(property)) {
     return {};
   }
   double value = cJSON_GetNumberValue(property);
-  debugI("Got bool %s %d", key, static_cast<int>(value));
-  debugI("Got bool %s %d", key, (static_cast<int>(value) != 0));
   return static_cast<bool>(value);
 }
-std::optional<char *> StoredSettings::getString(char *key) {
-  auto *property = cJSON_GetObjectItem(json, key);
+std::optional<char *> StoredSettings::getString(const char *key) {
+  auto *property = cJSON_GetObjectItem(json.get(), key);
   if (property == nullptr || cJSON_IsNull(property)) {
     return {};
   }
@@ -78,21 +72,18 @@ void StoredSettings::loadFromDisk() {
   auto dbBuffer = std::make_unique<unsigned char[]>(dbSize);
   containerDb.read(dbBuffer.get(), dbSize);
   containerDb.close();
-  auto *parsedJson = cJSON_Parse(reinterpret_cast<const char *>(dbBuffer.get()));
+  auto parsedJson = safeParse(reinterpret_cast<const char *>(dbBuffer.get()));
   if (parsedJson == nullptr) {
     debugE("Failed to parse settings json: %s", cJSON_GetErrorPtr());
   }
-  debugE("Read settings json: %s", cJSON_Print(parsedJson));
-  if (json != nullptr) {
-    //cJSON_Delete(json);
-  }
-  json = parsedJson;
+  debugE("Read settings json: %s", safePrint(parsedJson.get()).get());
+  json = std::move(parsedJson);
 }
 
 void StoredSettings::writeToDisk() {
-  char *jsonString = cJSON_Print(json);
-  updateDbFile(jsonString, strlen(jsonString) + 1);
-  debugV("Container definition size written to disk: %s", jsonString);
+  auto jsonString = safePrint(json.get());
+  updateDbFile(jsonString.get(), strlen(jsonString.get()) + 1);
+  debugV("Container definition size written to disk: %s", jsonString.get());
 }
 
 void StoredSettings::updateDbFile(const char *buffer, size_t length) {
@@ -117,17 +108,21 @@ void StoredSettings::updateDbFile(const char *buffer, size_t length) {
   SPIFFS.remove(dbBackupPath);
   SPIFFS.remove(dbTempPath);
 }
+
 StoredSettings::StoredSettings() {
-  json = cJSON_CreateObject();
+  json = safeParse("{}");
 }
+
 void StoredSettings::setup() {
   loadFromDisk();
 }
+
 void StoredSettings::reset() {
-  json = cJSON_CreateObject();
+  json = safeParse("{}");
   writeToDisk();
 }
-void StoredSettings::runTransaction(std::function<void()> transaction) {
+
+void StoredSettings::runTransaction(const std::function<void()>& transaction) {
   commitOnSet = false;
   transaction();
   commitOnSet = true;

@@ -65,8 +65,6 @@ void Debug::printMessage(DebugLevel level, fmt::CStringRef format,
       level,
       formattedString,
   };
-  Serial.println(message->content.c_str());
-  Serial.flush();
   xQueueSend(messageQueue, &message, pdMS_TO_TICKS(5));
 
 }
@@ -76,7 +74,7 @@ void Debug::printMessage(DebugLevel level, fmt::CStringRef format,
     debugE("Attempted to start command task without queue");
   }
   for (;;) {
-    std::string* commandStringAddress;
+    std::string *commandStringAddress;
     if (xQueueReceive(commandQueue, &commandStringAddress, portMAX_DELAY)) {
 
       auto commandString = std::unique_ptr<std::string>(commandStringAddress);
@@ -115,6 +113,7 @@ void stripUnicode(std::string &str) {
 }
 
 [[noreturn]] void Debug::messageBroadcastTask() {
+
   DebugMessage *queueMessage;
   if (messageQueue == nullptr) {
     debugE("Attempted to start broadcast task without queue");
@@ -123,6 +122,9 @@ void stripUnicode(std::string &str) {
   for (;;) {
     if (xQueueReceive(messageQueue, &queueMessage, portMAX_DELAY)) {
       auto message = std::unique_ptr<DebugMessage>(queueMessage);
+
+      Serial.println(message->content.c_str());
+      Serial.flush();
 
       if (message->level >= loggingLevel) {
         stripUnicode(message->content);

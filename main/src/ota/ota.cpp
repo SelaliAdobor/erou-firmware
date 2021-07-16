@@ -56,7 +56,7 @@ void Ota::setup() {
       &otaTaskHandle);            /* Task handle. */
 }
 
-void Ota::otaTask(void *) {
+[[noreturn]] void Ota::otaTask(void *) {
   for (;;) {
     ArduinoOTA.handle();
     delay(3500);
