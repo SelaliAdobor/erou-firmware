@@ -6,6 +6,8 @@ https://user-images.githubusercontent.com/17497673/126010893-3eb66534-0fc7-42d5-
 
 (working title, latest hardware uses Trinamic stepper drivers for near-silent operation)
 
+## What is it?
+
 Erou is a secure IoT enabled pill dispenser, and this is the firmware for it.
 
 Written in C++ , requires FreeRTOS and builds with ESP-IDF. 
@@ -16,12 +18,6 @@ which allows it to be used for non-medical purposes.
 Also avoids dependency on external backend services, device needs to be able to operate independantly of any backend service. 
 
 Matching app should be able to provide configuration via local network.
-
-## How to build
-
-Use `idf.py build`
-
-Requires C++17, included with ESP-IDF 4.x and up
 
 ## Project Structure
 
@@ -37,6 +33,14 @@ Requires C++17, included with ESP-IDF 4.x and up
 
 
 For more information on structure and contents of ESP-IDF projects, please refer to Section [Build System](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html) of the ESP-IDF Programming Guide.
+
+## How to build
+
+Use `idf.py build`
+
+Requires C++17, included with ESP-IDF 4.x and up
+
+
 
 ## TODO
 
