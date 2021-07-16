@@ -1,7 +1,7 @@
 # Erou Firmware 
 
 
-https://user-images.githubusercontent.com/17497673/126010837-754fd2a0-2dfa-4c3f-a33e-fe7cec537631.mov
+https://user-images.githubusercontent.com/17497673/126010893-3eb66534-0fc7-42d5-af43-0602e88c5af6.mov
 
 
 (working title, latest hardware uses Trinamic stepper drivers for near-silent operation)
