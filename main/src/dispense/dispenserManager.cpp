@@ -85,3 +85,27 @@ void DispenseManager::runDispenseTask() {
     runDispense(*next);
   }
 }
+
+void DispenseManager::addDispense(ShortString id,
+                                  ShortString name,
+                                  ShortString cronSchedule,
+                                  ContainerIdList containers) {
+  dispenses.push_back(Dispense{
+      .id = id,
+      .name = name,
+      .cronSchedule = cronSchedule,
+      .containerIds = containers,
+  });
+  writeToDisk();
+}
+
+std::optional<Dispense *> DispenseManager::getDispenseById(const ShortString &id) {
+  auto *dispense = std::find_if(dispenses.begin(),
+                                dispenses.end(),
+                                [id](const Dispense &dispense) -> bool {
+                                  return dispense.id == id;
+                                });
+
+  return dispense == nullptr ? std::make_optional<Dispense *>()
+                             : std::optional<Dispense *>(dispense);
+}

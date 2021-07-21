@@ -24,6 +24,7 @@ class DispenseManager {
   double secondsUntilNextDispense();
   std::optional<Dispense> getNextDispense(tm startingFrom);
   std::optional<Dispense> getNextDispense();
-
+  void addDispense(ShortString id, ShortString name, ShortString cronSchedule, ContainerIdList containers);
+  std::optional<Dispense*> getDispenseById(const ShortString& id);
   void runDispense(const Dispense &dispense);
 };

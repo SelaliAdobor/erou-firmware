@@ -13,8 +13,8 @@ class Dispense {
   ShortString id;
   ShortString name;
   ShortString cronSchedule;
+  ContainerIdList containerIds;
   void serializeInto(StoredSettings* store, const char *rootKey) const;
   void deserializeFrom(StoredSettings* store, const char *rootKey);
   double secondsUntil(tm startingTime);
-  ContainerIdList containerIds;
 };
