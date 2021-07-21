@@ -31,8 +31,7 @@ void Debug::setup(AsyncWebServer &server) {
 }
 
 Debug::Debug() {
-
-  messageQueue = xQueueCreate(maxMessagesInQueue, sizeof(DebugMessage &));
+  messageQueue = xQueueCreate(maxMessagesInQueue, sizeof(DebugMessage *));
   commandQueue = xQueueCreate(maxMessagesInQueue, sizeof(LongString));
 
   xTaskCreate(toFreeRtosTask(Debug, messageBroadcastTask),
@@ -53,11 +52,12 @@ Debug::Debug() {
 
 void Debug::printMessage(DebugLevel level, fmt::CStringRef format,
                          fmt::ArgList args) {
-  auto formattedString = ShortString(fmt::sprintf(format, args).c_str());
+  auto *formattedString = new LongString(fmt::sprintf(format, args).c_str());
   auto *message = new DebugMessage{
-      level,
-      formattedString,
+      .level = level,
+      .content = formattedString,
   };
+  Serial.println(formattedString->c_str());
   xQueueSend(messageQueue, &message, pdMS_TO_TICKS(5));
 
 }
@@ -101,31 +101,29 @@ bool isInvalidChar(int c) {
   return !(c >= 0 && c < 128);
 }
 
-void stripUnicode(ShortString &str) {
+void stripUnicode(LongString &str) {
   str.erase(std::remove_if(str.begin(), str.end(), isInvalidChar), str.end());
 }
 
 [[noreturn]] void Debug::messageBroadcastTask() {
-
-  DebugMessage *queueMessage;
   if (messageQueue == nullptr) {
     debugE("Attempted to start broadcast task without queue");
   }
+  DebugMessage *queueMessage = nullptr;
+  auto message = std::unique_ptr<DebugMessage>();
+  auto messageContent = std::unique_ptr<LongString>();
 
   for (;;) {
     if (xQueueReceive(messageQueue, &queueMessage, portMAX_DELAY)) {
-      auto message = std::unique_ptr<DebugMessage>(queueMessage);
-
-      message->content.repair(); //Required by ETL after memcpy
-
-      Serial.println(message->content.c_str());
-      Serial.flush();
+      queueMessage->content->repair(); //Required by ETL after memcpy
+      message.reset(queueMessage);
+      messageContent.reset(queueMessage->content);
 
       if (message->level >= loggingLevel) {
-        stripUnicode(message->content);
-        ws.textAll(message->content.c_str(), message->content.length());
+        stripUnicode(*messageContent);
+        ws.textAll(messageContent->c_str(), messageContent->length());
       }
-      delay(10);
+      delay(500);
     }
   }
 }
@@ -160,7 +158,7 @@ void Debug::handleWsEvent(AsyncWebSocket *,
     case WS_EVT_DATA: {
       info = static_cast<AwsFrameInfo *>(arg);
       if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
-        if(info->len > ShortString::MAX_SIZE){
+        if (info->len > ShortString::MAX_SIZE) {
           debugE("Debug command longer than max length %d", ShortString::MAX_SIZE);
           break;
         }
@@ -175,7 +173,7 @@ void Debug::handleWsEvent(AsyncWebSocket *,
 
 int esp_apptrace_vprintf(const char *fmt, va_list ap) {
   char espString[50];
-  int written = vsprintf(espString, fmt, ap);
+  int written = vsnprintf(espString, 50, fmt, ap);
   debugESP("ESP Log: %s", espString);
   return written;
 }

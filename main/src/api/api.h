@@ -8,5 +8,5 @@ class Api {
   ContainerManager *containerManager;
  public:
   explicit Api(ContainerManager *container_manager) : containerManager(container_manager) {}
-  void setup(AsyncWebServer server) ;
+  void setup(AsyncWebServer* server) ;
 };

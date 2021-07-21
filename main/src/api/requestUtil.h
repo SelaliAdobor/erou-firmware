@@ -30,13 +30,12 @@ inline int64_t requestParamAs<int64_t>(AsyncWebServerRequest *request, const cha
 }
 
 inline bool sendErrorIfMissing(AsyncWebServerRequest *request, const std::vector<const char *>& params) {
-  std::vector<const char *> missingParams = std::vector<const char *>(params.size());
+  std::vector<const char *> missingParams = std::vector<const char *>();
   for (const char *param : params) {
     if (!request->hasParam(param, true)) {
       missingParams.push_back(param);
     }
   }
-
   if (!missingParams.empty()) {
     auto *response = cJSON_CreateObject();
     cJSON_AddBoolToObject(response, "error", 1);
@@ -44,7 +43,7 @@ inline bool sendErrorIfMissing(AsyncWebServerRequest *request, const std::vector
 
     auto *missingFields = cJSON_AddArrayToObject(response, "missingFields");
 
-    for (const char *missingParam : params) {
+    for (const char *missingParam : missingParams) {
       cJSON_AddItemToArray(missingFields, cJSON_CreateString(missingParam));
     }
     request->send(500, "text/json", safePrint(response).get());

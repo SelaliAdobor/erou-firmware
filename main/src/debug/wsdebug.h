@@ -44,7 +44,7 @@ class Debug {
 
   struct DebugMessage {
     DebugLevel level;
-    ShortString content;
+    LongString* content;
   };
 
   TaskHandle_t messageLoopHandle{};

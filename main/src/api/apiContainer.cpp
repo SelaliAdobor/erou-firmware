@@ -5,7 +5,7 @@
 
 void Api::addContainer(AsyncWebServerRequest *request) {
   bool hasMissingField = sendErrorIfMissing(request, {
-      "id", "name", "index", "description", "startingQuantity", "cron"
+      "id", "name", "index", "description", "quantity", "cron"
   });
 
   if (hasMissingField) {

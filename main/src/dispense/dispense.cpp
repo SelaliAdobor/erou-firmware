@@ -25,9 +25,9 @@ void Dispense::deserializeFrom(StoredSettings *store, const char *rootKey) {
     cronSchedule = ShortString(*storedCron);
     debugI("cron %s", name.c_str());
   }
-  if (auto countainerCount = store->getIntF("%s" "containerCount", rootKey)) {
-    containerIds = ContainerIdList(*countainerCount);
-    for (int i = 0; i < *countainerCount; i++) {
+  if (auto containerCount = store->getIntF("%s" "containerCount", rootKey)) {
+    containerIds = ContainerIdList(*containerCount);
+    for (int i = 0; i < *containerCount; i++) {
       if (auto containerId = store->getStringF("%s" "containerId-%d", rootKey, i)) {
         containerIds[i] = ShortString(*containerId);
         debugI("container ID %s", name.c_str());

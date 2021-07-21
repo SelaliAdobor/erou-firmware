@@ -58,9 +58,11 @@ void DispenseManager::runDispense(const Dispense &dispense) {
       debugE("Attempted to dispense invalid container %s", containerId.c_str());
       continue;
     }
+    debugE("Dispensing: %s", containerId.c_str());
     auto[index, container] = foundContainer.value();
     motion->goToContainerAt(index);
     delay(10000); //Todo wait for input
+    debugE("Dispensed: %s", containerId.c_str());
   }
 }
 
@@ -77,6 +79,7 @@ void DispenseManager::runDispenseTask() {
       debugE("Unable to get local time");
       continue;
     }
+    debugE("Waiting %d seconds to dispense %s", (*next).secondsUntil(currentTime), (*next).name.c_str());
     vTaskDelayUntil(&lastDispenseTaskRun,
                     pdMS_TO_TICKS((*next).secondsUntil(currentTime) * 1000));
     runDispense(*next);

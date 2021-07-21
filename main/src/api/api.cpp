@@ -1,14 +1,14 @@
 #include <container.h>
 #include "api.h"
 
-void Api::setup(AsyncWebServer server) {
+void Api::setup(AsyncWebServer* server) {
 
-  server.on("/containers",
+  server->on("/containers",
             HTTP_POST,
-            std::bind(&Api::addContainer, this, std::placeholders::_1));
+            [this](auto && PH1) { addContainer(std::forward<decltype(PH1)>(PH1)); });
 
-  server.on("/containers/*",
+  server->on("/containers/*",
             HTTP_GET,
-            std::bind(&Api::getContainer, this, std::placeholders::_1));
+            [this](auto && PH1) { getContainer(std::forward<decltype(PH1)>(PH1)); });
 
 }
