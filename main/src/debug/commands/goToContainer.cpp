@@ -1,7 +1,7 @@
 #include "wsdebug.h"
 #include "commands.h"
 
-void DebugCommands::goToContainer(const ShortString&  args) {
+void DebugCommands::goToContainer(const LongString&  args) {
   int containerIndex = 0;
 
   if (sscanf(args.c_str(), "%d", &containerIndex) != 1) {

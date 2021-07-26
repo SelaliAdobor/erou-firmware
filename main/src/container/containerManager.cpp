@@ -18,17 +18,16 @@ std::optional<Container> ContainerManager::getContainerContent(const int contain
   return containerContents[container];
 }
 
-void ContainerManager::setContainerContent(int container, const Container content) {
+void ContainerManager::setContainerContent(int container, const Container &content) {
   if (container >= config::physical::containerCount) {
     debugE("Attempted to set out of bounds container %d", container);
     return;
   }
-  containerContents.insert(ContainerMap::value_type(container, content));
+  containerContents[container] = content;
   writeToDisk();
 }
 
-ContainerManager::ContainerManager(StoredSettings *stored_settings) : storedSettings(stored_settings) {
-}
+ContainerManager::ContainerManager(StoredSettings *stored_settings) : storedSettings(stored_settings) {}
 
 void ContainerManager::setup() {
   loadFromDisk();
@@ -36,9 +35,9 @@ void ContainerManager::setup() {
 ContainerMap ContainerManager::getAllLoadedContainers() {
   return containerContents;
 }
-std::optional<etl::pair<int, Container>> ContainerManager::getById(ShortString id) {
+std::optional<etl::pair<int, Container>> ContainerManager::getById(const ShortString& id) {
   for (auto[index, container] : containerContents) {
-    if (container.id == id) {
+    if (container.id.compare(id.data()) == 0) {
       return etl::pair<int, Container>({index, container});
     }
   }

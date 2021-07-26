@@ -19,7 +19,6 @@ idf_component_register(SRCS
         "src/motion/motionHoming.cpp"
         "src/ota/ota.cpp"
         "src/container/containerManager.cpp"
-        "src/container/container.cpp"
         "src/container/containerManagerSerialization.cpp"
         "src/dispense/dispenserManager.cpp"
         "src/dispense/dispenserManagerSerialization.cpp"
@@ -41,7 +40,7 @@ idf_component_register(SRCS
         "src/etl"
 
 
-        REQUIRES arduino-esp32 esp_wifi esp_ipc esp_rom wpa_supplicant external-libraries fmt-esp32)
+        REQUIRES arduino-esp32 ArduinoJson esp_wifi esp_ipc esp_rom wpa_supplicant external-libraries fmt-esp32)
 
 
 function(install)

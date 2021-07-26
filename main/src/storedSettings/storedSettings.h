@@ -6,12 +6,9 @@
 #include <functional>
 #include "wsdebug.h"
 #include "cjson_util.h"
-
+#include "ArduinoJson.h"
 class StoredSettings {
  private:
-  std::unique_ptr<cJSON, SafeParseDeleter> json;
-
-  static void updateDbFile(const char *buffer, size_t length);
   /**
    * Write process avoids losing data if power is lost
    * 1. Move main DB to backup path
@@ -26,49 +23,25 @@ class StoredSettings {
   void writeToDisk();
   bool commitOnSet = true;
 
+  DynamicJsonDocument backingDocument = DynamicJsonDocument(2048);
  public:
-  StoredSettings();
   void setup();
   void reset();
-  void setInt(const char *key, int value);
-  void setString(const char *key, const char *value);
-  void setBool(const char *key, bool value);
 
-  std::optional<char *> getString(const char *key);
-  std::optional<int> getInt(const char *key);
-  std::optional<bool> getBool(const char *key);
+  template <class T>
+  T get(std::string_view name){
+    return backingDocument[name].as<T>();
+  }
 
-  void runTransaction(const std::function<void()>& transaction);
+  template <class T>
+  void set(std::string_view name, T value){
+     backingDocument[name] = value;
+     if(commitOnSet){
+       writeToDisk();
+     }
+  }
 
-  FMT_VARIADIC(void, setIntF, int, fmt::CStringRef)
-  inline void setIntF(int value, fmt::CStringRef format, fmt::ArgList args) {
-    setInt(fmt::sprintf(format, args).c_str(), value);
-  };
-
-  FMT_VARIADIC(void, setStringF, const char*, fmt::CStringRef)
-  inline void setStringF(const char *value, fmt::CStringRef format, fmt::ArgList args) {
-    setString(fmt::sprintf(format, args).c_str(), value);
-  };
-
-  FMT_VARIADIC(void, setBoolF, bool, fmt::CStringRef)
-  inline void setBoolF(bool value, fmt::CStringRef format, fmt::ArgList args) {
-    setBool(fmt::sprintf(format, args).c_str(), value);
-  };
-
-  FMT_VARIADIC(std::optional<int>, getIntF, fmt::CStringRef)
-  inline std::optional<int> getIntF(fmt::CStringRef format, fmt::ArgList args) {
-    return getInt(const_cast<char *>(fmt::sprintf(format, args).c_str()));
-  };
-
-  FMT_VARIADIC(std::optional<bool>, getBoolF, fmt::CStringRef)
-  inline std::optional<bool> getBoolF(const fmt::CStringRef format, fmt::ArgList args) {
-    return getBool(const_cast<char *>(fmt::sprintf(format, args).c_str()));
-  };
-
-  FMT_VARIADIC(std::optional<char *>, getStringF, fmt::CStringRef)
-  inline std::optional<char *> getStringF(fmt::CStringRef format, fmt::ArgList args) {
-    return getString(const_cast<char *>(fmt::sprintf(format, args).c_str()));
-  };
+  void runTransaction(const std::function<void(JsonDocument&)>& run);
 };
 
 extern StoredSettings storedSettings;

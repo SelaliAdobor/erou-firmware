@@ -1,7 +1,6 @@
 #include "SPIFFS.h"
 #include "Arduino.h"
 #include "freertos/task.h"
-#include "ESPAsyncWebServer.h"
 #include "config_constants.h"
 #include "wsdebug.h"
 #include "esp32-hal.h"
@@ -13,6 +12,7 @@
 #include <containerManager.h>
 #include <api.h>
 #include <requestUtil.h>
+#include "mongoose.h"
 #include "commands.h"
 
 TMC2130Stepper driver(pins::stepper::cs);
@@ -20,7 +20,6 @@ TMC2130Stepper driver(pins::stepper::cs);
 ESP_FlexyStepper stepper;
 
 Motion motion = Motion(&driver, &stepper); // NOLINT(cppcoreguidelines-slicing)
-AsyncWebServer server(80);
 ContainerManager containerManager = ContainerManager(&storedSettings);
 Api api = Api(&containerManager);
 
@@ -58,7 +57,7 @@ void setup() {
 
   setupTimezone();
 
-  Ota::setup();server.begin();
+  Ota::setup();
   setupDebug();
   setupWebServer();
 
@@ -70,28 +69,17 @@ void setup() {
 }
 void setupTimezone() {
   const char *timezoneSettingsKey = "config/timezone";
-  if (auto storedTimezone = storedSettings.getString(timezoneSettingsKey)) {
-    configTzTime(storedTimezone.value(), config::network::ntpServer);
+  auto storedTimezone = storedSettings.get<JsonVariant>(timezoneSettingsKey);
+  if (storedTimezone.is<const char *>()) {
+    configTzTime(storedTimezone.as<const char *>(), config::network::ntpServer);
   }
 }
 
 void setupDebug() {
-  debugInstance.setup(server);
+  debugInstance.setup(api);
   DebugCommands::setup(&motion);
 }
 
 void setupWebServer() {
-
-  server.on("/reset", HTTP_GET, [](AsyncWebServerRequest *request) {
-    storedSettings.reset();
-    auto *response = cJSON_CreateObject();
-    cJSON_AddBoolToObject(response, "clearedSettings", 1);
-    replyWithJson(request, 200, response);
-  });
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-    auto *response = cJSON_CreateObject();
-    cJSON_AddBoolToObject(response, "helloWorld", 1);
-    replyWithJson(request, 200, response);
-  });
-  api.setup(&server);
+  api.setup();
 }

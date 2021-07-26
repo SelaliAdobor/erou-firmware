@@ -1,6 +1,6 @@
 #include "commands.h"
 
-void DebugCommands::setDebugLevel(const ShortString &args) {
+void DebugCommands::setDebugLevel(const LongString &args) {
   int newLevel = 0;
   if (sscanf(args.c_str(), "%d", &newLevel) != 1) {
     debugE("Failed to parse args %s", args.c_str());

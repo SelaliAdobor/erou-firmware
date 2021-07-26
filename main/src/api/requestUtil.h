@@ -1,67 +1,54 @@
 #pragma once
 #include "ESPAsyncWebServer.h"
 #include "cjson_util.h"
-template<class T>
-inline T requestParamAs(AsyncWebServerRequest *request, const char *param);
+#include "mjson.h"
 
-template<>
-inline std::string requestParamAs<std::string>(AsyncWebServerRequest *request, const char *param) {
-  return std::string(request->getParam(param, true)->value().c_str());
+using DoubleParam = std::pair<const char *, double *>;
+using IntParam = std::pair<const char *, int *>;
+using ShortStringParam = std::pair<const char *, ShortString *>;
+using LongStringParam = std::pair<const char *, LongString *>;
+using BoolParam = std::pair<const char *, bool *>;
+
+template<class T, class F, class...Args>
+std::vector<T> accumulateParams(F f, Args &&...args) {
+  std::vector<T> result = {f(std::forward<Args>(args)) ...};
+  return result;
 }
 
-template<>
-inline ShortString requestParamAs<ShortString>(AsyncWebServerRequest *request, const char *param) {
-  return ShortString(request->getParam(param, true)->value().c_str());
-}
+template<typename... Params>
+std::vector<const char *> getJsonParams(JsonObject *json, Params... params) {
+  auto missingParams = accumulateParams<const char *>([=](auto ret) -> const char * {
 
-template<>
-inline LongString requestParamAs<LongString>(AsyncWebServerRequest *request, const char *param) {
-  return LongString(request->getParam(param, true)->value().c_str());
-}
+    if constexpr(std::is_same<decltype(ret), DoubleParam>() ||
+        std::is_same<decltype(ret), IntParam>() ||
+        std::is_same<decltype(ret), BoolParam>() ||
+        std::is_same<decltype(ret), ShortStringParam>() ||
+        std::is_same<decltype(ret), LongStringParam>()) {
+      auto[param, value] = ret;
+      JsonVariant found = json->getMember(param);
+      if (found.isNull() || found.isUndefined()) {
+        return param; //Returns parameter name when it's missing
+      }
 
-template<>
-inline int requestParamAs<int>(AsyncWebServerRequest *request, const char *param) {
-  return static_cast<int>(request->getParam(param, true)->value().toInt());
-}
-
-template<>
-inline int64_t requestParamAs<int64_t>(AsyncWebServerRequest *request, const char *param) {
-  return static_cast<int64_t>(request->getParam(param, true)->value().toInt());
-}
-
-inline bool sendErrorIfMissing(AsyncWebServerRequest *request, const std::vector<const char *>& params) {
-  std::vector<const char *> missingParams = std::vector<const char *>();
-  for (const char *param : params) {
-    if (!request->hasParam(param, true)) {
-      missingParams.push_back(param);
+      if constexpr(std::is_same<decltype(ret), ShortStringParam>()) {
+        *value = ShortString(found.as<const char*>());
+      } else if constexpr(std::is_same<decltype(ret), LongStringParam>()) {
+        *value = LongString(found.as<const char*>());
+      } else {
+        *value = found;
+      }
+      return nullptr;
     }
-  }
-  if (!missingParams.empty()) {
-    auto *response = cJSON_CreateObject();
-    cJSON_AddBoolToObject(response, "error", 1);
-    cJSON_AddStringToObject(response, "cause", "missing fields");
+    return nullptr;
+  }, params...);
 
-    auto *missingFields = cJSON_AddArrayToObject(response, "missingFields");
-
-    for (const char *missingParam : missingParams) {
-      cJSON_AddItemToArray(missingFields, cJSON_CreateString(missingParam));
-    }
-    request->send(500, "text/json", safePrint(response).get());
-    cJSON_Delete(response);
-    return true;
-  }
-  return false;
+  missingParams.erase(std::remove_if(missingParams.begin(), missingParams.end(), [](const auto a) {
+    return a == nullptr;
+  }), missingParams.end());
+  return missingParams;
 }
 
-inline void replyWithError(AsyncWebServerRequest *request, const char *error) {
-  auto *response = cJSON_CreateObject();
-  cJSON_AddBoolToObject(response, "error", 1);
-  cJSON_AddStringToObject(response, "cause", error);
-
-  request->send(500, "text/json", safePrint(response).get());
-
-}
-
-inline void replyWithJson(AsyncWebServerRequest *request, int code, cJSON *json) {
-  request->send(code, "text/json", safePrint(json).get());
+template<typename... Params>
+std::vector<const char *> getJsonParams(mg_str *str, Params... params) {
+  return getJsonParams<decltype(params)...>(str->ptr, str->len, params...);
 }

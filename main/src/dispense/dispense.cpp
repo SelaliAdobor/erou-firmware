@@ -1,42 +1,5 @@
 #include "dispense.h"
 #include "croncpp.h"
-#define FIELD_NAME(x) #x
-
-void Dispense::serializeInto(StoredSettings *store, const char *rootKey) const {
-  store->setStringF(id.c_str(), "%s" FIELD_NAME(id), rootKey);
-  store->setStringF(name.c_str(), "%s" FIELD_NAME(name), rootKey);
-  store->setStringF(cronSchedule.c_str(), "%s" FIELD_NAME(cronSchedule), rootKey);
-  store->setIntF(static_cast<int>(containerIds.size()), "%s" "containerCount", rootKey);
-  for (int i = 0; i < containerIds.size(); i++) {
-    store->setStringF(containerIds[i].c_str(), "%s" "containerId-%d", rootKey, i);
-  }
-}
-
-void Dispense::deserializeFrom(StoredSettings *store, const char *rootKey) {
-  if (auto storedId = store->getStringF("%s" FIELD_NAME(id), rootKey)) {
-    id = ShortString(*storedId);
-    debugI("id %s", id.c_str());
-  }
-  if (auto storedName = store->getStringF("%s" FIELD_NAME(name), rootKey)) {
-    name = ShortString(*storedName);
-    debugI("name %s", name.c_str());
-  }
-  if (auto storedCron = store->getStringF("%s" FIELD_NAME(cronSchedule), rootKey)) {
-    cronSchedule = ShortString(*storedCron);
-    debugI("cron %s", name.c_str());
-  }
-  if (auto containerCount = store->getIntF("%s" "containerCount", rootKey)) {
-    containerIds = ContainerIdList(*containerCount);
-    for (int i = 0; i < *containerCount; i++) {
-      if (auto containerId = store->getStringF("%s" "containerId-%d", rootKey, i)) {
-        containerIds[i] = ShortString(*containerId);
-        debugI("container ID %s", name.c_str());
-      }
-    }
-  }
-}
-
-#undef FIELD_NAME
 
 double Dispense::secondsUntil(tm startingTime) {
   auto cron = cron::make_cron(cronSchedule.c_str());

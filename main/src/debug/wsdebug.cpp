@@ -8,6 +8,7 @@
 #include <functional>
 #include <etl_types.h>
 #include <commands.h>
+#include <api.h>
 #include "free_rtos_util.h"
 
 Debug debugInstance = Debug();
@@ -15,24 +16,28 @@ Debug debugInstance = Debug();
 //ESP-IDF callback for debug statements
 int esp_apptrace_vprintf(const char *fmt, va_list ap);
 
-void Debug::setup(AsyncWebServer &server) {
-  server.addHandler(&ws);
+void Debug::setup(Api* apiInstance) {
+  api = apiInstance;
   esp_log_set_vprintf(esp_apptrace_vprintf);
-
-  ws.onEvent(std::bind(&Debug::handleWsEvent,
-                       this,
-                       std::placeholders::_1,
-                       std::placeholders::_2,
-                       std::placeholders::_3,
-                       std::placeholders::_4,
-                       std::placeholders::_5,
-                       std::placeholders::_6));
-
+  api->registerWsRoute("/debug", Get, [this](WsMessage &message) {
+    if (message.text.size() > ShortString::MAX_SIZE) {
+      debugE("Debug command longer than max length %d", ShortString::MAX_SIZE);
+      return;
+    }
+    char *data = strdup(message.text.data());
+    auto *payloadText = new LongString(data);
+    xQueueSend(commandQueue, &payloadText, pdMS_TO_TICKS(500));
+  });
 }
 
 Debug::Debug() {
-  messageQueue = xQueueCreate(maxMessagesInQueue, sizeof(DebugMessage *));
-  commandQueue = xQueueCreate(maxMessagesInQueue, sizeof(LongString));
+
+  messageQueue = xQueueCreate(
+      maxMessagesInQueue,
+      sizeof(DebugMessage *) // NOLINT(bugprone-sizeof-expression) FreeRTOS makes you do weird things
+  );
+
+  commandQueue = xQueueCreate(maxMessagesInQueue, sizeof(LongString *));
 
   xTaskCreate(toFreeRtosTask(Debug, messageBroadcastTask),
               "Websocket Debug Task",
@@ -48,17 +53,6 @@ Debug::Debug() {
               config::debug::wsTaskPriority,
               &commandRunnerHandle
   );
-}
-
-void Debug::printMessage(DebugLevel level, fmt::CStringRef format,
-                         fmt::ArgList args) {
-  auto *formattedString = new LongString(fmt::sprintf(format, args).c_str());
-  auto *message = new DebugMessage{
-      .level = level,
-      .content = formattedString,
-  };
-  Serial.println(formattedString->c_str());
-  xQueueSend(messageQueue, &message, pdMS_TO_TICKS(5));
 
 }
 
@@ -67,32 +61,34 @@ void Debug::printMessage(DebugLevel level, fmt::CStringRef format,
     debugE("Attempted to start command task without queue");
   }
   for (;;) {
-    ShortString *commandStringAddress;
-    if (xQueueReceive(commandQueue, &commandStringAddress, portMAX_DELAY)) {
+    LongString *commandStringAddress;
+    if (!xQueueReceive(commandQueue, &commandStringAddress, portMAX_DELAY)) {
+      continue; //MAX_DELAY means this won't cause WDT issues
+    }
 
-      auto commandString = std::unique_ptr<ShortString>(commandStringAddress);
-      bool commandRan = false;
-      for (const DebugCommand &command : DebugCommands::registeredCommands) {
-        if (commandString->rfind(command.name, 0) != 0) {
-          continue;
-        }
-
-        if (commandString->length() > strlen(command.name)) {
-          const ShortString args = commandString->substr(strlen(command.name));
-          debugI("Matched Command `%s` with args `%s`", command.name, args.c_str());
-          command.run(args);
-        } else {
-          const ShortString empty;
-          debugI("Matched Command `%s`", command.name);
-          command.run(empty);
-        }
-
-        commandRan = true;
-        break;
+    auto commandString = std::unique_ptr<LongString>(commandStringAddress);
+    bool commandRan = false;
+    for (const DebugCommand &command : DebugCommands::registeredCommands) {
+      if (commandString->find(command.name.data()) != 0) {
+        debugI("Failed to match command `%s`: `%d`", commandString->c_str(), commandString->find(command.name.data()));
+        continue;
       }
-      if (!commandRan) {
-        debugE("Unknown Command: %s", commandString->c_str());
+
+      if (commandString->length() > command.name.length()) {
+        const LongString args = commandString->substr(command.name.length());
+        debugI("Matched Command `%s` with args `%s`", command.name.data(), args.c_str());
+        command.run(args);
+      } else {
+        const LongString empty;
+        debugI("Matched Command `%s`", command.name.data());
+        command.run(empty);
       }
+
+      commandRan = true;
+      break;
+    }
+    if (!commandRan) {
+      debugE("Unknown Command: %s", commandString->c_str());
     }
   }
 }
@@ -110,18 +106,16 @@ void stripUnicode(LongString &str) {
     debugE("Attempted to start broadcast task without queue");
   }
   DebugMessage *queueMessage = nullptr;
-  auto message = std::unique_ptr<DebugMessage>();
-  auto messageContent = std::unique_ptr<LongString>();
-
   for (;;) {
     if (xQueueReceive(messageQueue, &queueMessage, portMAX_DELAY)) {
       queueMessage->content->repair(); //Required by ETL after memcpy
-      message.reset(queueMessage);
-      messageContent.reset(queueMessage->content);
+
+      auto message = std::unique_ptr<DebugMessage>(queueMessage);
+      auto messageContent = std::unique_ptr<LongString>(queueMessage->content);
 
       if (message->level >= loggingLevel) {
         stripUnicode(*messageContent);
-        ws.textAll(messageContent->c_str(), messageContent->length());
+        api->sendAllWs("/debug", messageContent->c_str());
       }
       delay(500);
     }
@@ -131,10 +125,10 @@ void stripUnicode(LongString &str) {
 bool startsWith(const char *str, const char *pre) {
   return strncmp(pre, str, strlen(pre)) == 0;
 }
-
-void Debug::handleWsEvent(AsyncWebSocket *,
+#ifdef ESP_ASYNC
+void Debug::handleWsEvent(AsyncWebSocketRequest * request,
                           AsyncWebSocketClient *client,
-                          AwsEventType type,
+                          int type,
                           void *arg,
                           uint8_t *data,
                           size_t len) {
@@ -170,6 +164,7 @@ void Debug::handleWsEvent(AsyncWebSocket *,
     default:break;
   }
 }
+#endif
 
 int esp_apptrace_vprintf(const char *fmt, va_list ap) {
   char espString[50];

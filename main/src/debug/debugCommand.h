@@ -1,7 +1,7 @@
 #pragma once
-
+#include "etl_types.h"
 
 struct DebugCommand {
-  const char* name;
-  void (*run)(const ShortString&);
+  etl::string_view name;
+  void (*run)(const LongString&);
 };

@@ -5,29 +5,30 @@
 #include "SPIFFS.h"
 #include "dispenserManager.h"
 #include "dispense.h"
-
+#include "dispenseSerialization.h"
 void DispenseManager::loadFromDisk() {
   dispenses.clear();
-
-  if (auto dispenseCount = storedSettings->getInt("dispenses/count")) {
-    dispenses = DispenseList(*dispenseCount);
-    for (int index = 0; index < config::physical::containerCount; index++) {
-      std::string rootKey = fmt::sprintf("dispenses/%d/", index);
-      Dispense dispense;
-      dispense.deserializeFrom(storedSettings, rootKey.c_str());
-      dispenses[index] = dispense;
-    }
-    debugI("Loaded %d dispenses from disk", dispenses.size());
+  auto loadedDispenses = storedSettings->get<JsonArray>("dispenses");
+  if (loadedDispenses.isNull()) {
+    debugI("No dispense found on disk");
   }
-
+  for (auto dispense : loadedDispenses) {
+    if (!dispense.is<Dispense>()) {
+      continue;
+    }
+    dispenses.push_back(dispense);
+  }
+  debugI("Loaded %d dispenses from disk", dispenses.size());
 }
 
 void DispenseManager::writeToDisk() {
-  storedSettings->setInt("dispenses/count", static_cast<int>(dispenses.size()));
-  for (int i = 0; i < dispenses.size(); i++) {
-    std::string rootKey = fmt::sprintf("dispenses/%d/", i);
-    dispenses[i].serializeInto(storedSettings, rootKey.c_str());
-  }
+  storedSettings->runTransaction([&](JsonDocument& settings) {
+    JsonArray loadedDispenses = settings.createNestedArray("dispenses");
+    loadedDispenses.clear();
+    for (int i = 0; i < dispenses.size(); i++) {
+      loadedDispenses[i] = dispenses[i];
+    }
+  });
   debugI("Wrote %d dispenses to disk", dispenses.size());
 }
 

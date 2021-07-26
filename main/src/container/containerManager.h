@@ -13,10 +13,10 @@ class ContainerManager {
  private:
   ContainerMap containerContents;
   static const size_t maxContainerDBSize = 8048;
-  StoredSettings* storedSettings;
+  StoredSettings *storedSettings;
 
-  static constexpr const char* jsonContainerKey ="container";
-  static constexpr const char* jsonVersionKey = "version";
+  static constexpr const char *jsonContainerKey = "container";
+  static constexpr const char *jsonVersionKey = "version";
 
   /**
    * Write process avoids losing data if power is lost
@@ -24,17 +24,17 @@ class ContainerManager {
    * 2. Move temporary DB to main path
    * 3. Delete backup
    */
-  static constexpr const char* dbPath = "/cfg/containers.json";
-  static constexpr const char* dbTempPath = "/cfg/containers.json.tmp";
-  static constexpr const char* dbBackupPath = "/cfg/containers.json.tmp.bak";
+  static constexpr const char *dbPath = "/cfg/containers.json";
+  static constexpr const char *dbTempPath = "/cfg/containers.json.tmp";
+  static constexpr const char *dbBackupPath = "/cfg/containers.json.tmp.bak";
 
  public:
   ContainerManager(StoredSettings *stored_settings);
 
   std::optional<Container> getContainerContent(int container);
-  void setContainerContent(int container, Container content);
+  void setContainerContent(int index, const Container &container);
   ContainerMap getAllLoadedContainers();
-  std::optional<etl::pair<int, Container>>  getById(ShortString id);
+  std::optional<etl::pair<int, Container>> getById(const ShortString& id);
   void setup();
 
   void loadFromDisk();

@@ -1,74 +1,79 @@
 #include <config_constants.h>
 #include <container.h>
+#include "mongoose.h"
 #include "api.h"
 #include "requestUtil.h"
 
-void Api::addContainer(AsyncWebServerRequest *request) {
-  bool hasMissingField = sendErrorIfMissing(request, {
-      "id", "name", "index", "description", "quantity", "cron"
-  });
+void Api::addContainer(HttpRequest &req, HttpReply &res) {
+  int index;
+  Container content;
+  static DynamicJsonDocument json(2048);
+  json.clear();
+  auto error = deserializeJson(json, req.body.ptr, req.body.len);
+  if (error) {
+    res.sendText(BadRequest, error.c_str());
+  }
+  auto root = json.as<JsonObject>();
+  auto missingFields = getJsonParams(&root,
+                                     IntParam("index", &index),
+                                     ShortStringParam ("id", &content.id),
+                                     LongStringParam ("name", &content.name),
+                                     LongStringParam("description", &content.description),
+                                     IntParam("quantity", &content.quantity));
 
-  if (hasMissingField) {
+  if (!missingFields.empty()) {
+    res.sendJson(BadRequest, [&](auto &reply) {
+      auto replyFields = reply.createNestedArray("missingFields");
+      for (const auto *field : missingFields) {
+        debugV("Missing field %s", field);
+        replyFields.add(field);
+      }
+    });
     return;
   }
 
-  int64_t index = requestParamAs<int64_t>(request, "index");
-
   if (index > config::physical::containerCount) {
-   return replyWithError(request, "exceeded container count");
+    return res.sendText(BadRequest, "exceeded container count");
   }
 
-  Container content = {
-      .id =  requestParamAs<ShortString>(request, "id"),
-      .name =  requestParamAs<ShortString>(request, "name"),
-      .description = requestParamAs<ShortString>(request, "description"),
-      .quantity = requestParamAs<int>(request, "quantity"),
-  };
+  containerManager->setContainerContent(index, content);
 
-  if (content.id.is_truncated()) {
-    return replyWithError(request, "id exceeded max length");
-  }
-
-  if (content.name.is_truncated()) {
-    return replyWithError(request, "name exceeded max length");
-  }
-  containerManager->setContainerContent(static_cast<int>(index), content);
-
-  auto *response = cJSON_CreateObject();
-  cJSON_AddStringToObject(response, "id", content.id.c_str());
-  cJSON_AddStringToObject(response, "name", content.name.c_str());
-  cJSON_AddStringToObject(response, "description", content.description.c_str());
-  cJSON_AddNumberToObject(response, "quantity", content.quantity);
-
-  request->send(200, "text/json", safePrint(response).get());
+  res.sendJson(Ok, [&](auto &reply) {
+    reply["created"] = true;
+    reply["id"] = content.id.data();
+    reply["name"] = content.name.data();
+    reply["description"] = content.description.data();
+    reply["quantity"] = content.quantity;
+  });
 }
 
-void Api::getContainer(AsyncWebServerRequest *request) {
-  int containerIndex = 0;
-
-  if (sscanf(request->url().c_str(), "/containers/%d", &containerIndex) != 1) {
-    debugE("Failed to parse index %s %d", request->url().c_str(), containerIndex);
-    return replyWithError(request, "failed to parse container number from path");
+void Api::getContainer(HttpRequest &req, HttpReply &res) {
+  if (req.params.count("id") < 1) {
+    debugE("Failed to parse index %s", req.url);
+    return res.sendText(BadRequest, "failed to parse container number from path");
   }
 
+  int containerIndex = atoi(req.params["id"].data());
+
   if (containerIndex > config::physical::containerCount) {
-    return replyWithError(request, "exceeded max container count");
+    return res.sendText(BadRequest, "exceeded countainer count");
   }
 
   auto container = containerManager->getContainerContent(containerIndex);
-  auto *response = cJSON_CreateObject();
-  if (!container.has_value()) {
-    cJSON_AddBoolToObject(response, "foundContainer", 0);
-    replyWithJson(request, 200, response);
-    return;
-  };
 
-  cJSON_AddBoolToObject(response, "foundContainer", 1);
-  cJSON_AddStringToObject(response, "id", container->id.c_str());
-  cJSON_AddStringToObject(response, "name", container->name.c_str());
-  cJSON_AddStringToObject(response, "description", container->description.c_str());
-  cJSON_AddNumberToObject(response, "quantity", container->quantity);
-  replyWithJson(request, 200, response);
+  if (!container.has_value()) {
+    res.sendJson(Ok, [&](auto &reply) { reply["foundContainer"] = false; });
+    return;
+  }
+
+  res.sendJson(Ok, [&](auto &reply) {
+    reply["foundContainer"] = true;
+    reply["id"] = container->id.data();
+    reply["name"] = container->name.data();
+    reply["description"] = container->description.data();
+    reply["quantity"] = container->quantity;
+  });
 }
+
 
 

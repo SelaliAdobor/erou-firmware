@@ -8,10 +8,10 @@
 class DebugCommands {
   inline static Motion *motion;
 
-  static void checkUptime(const ShortString &args);
-  static void goToContainer(const ShortString &args);
-  static void setStepperEnable(const ShortString &args);
-  static void setDebugLevel(const ShortString &args);
+  static void checkUptime(const LongString &args);
+  static void goToContainer(const LongString &args);
+  static void setStepperEnable(const LongString &args);
+  static void setDebugLevel(const LongString &args);
 
  public:
   static constexpr DebugCommand registeredCommands[] = {

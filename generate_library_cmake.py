@@ -6,6 +6,8 @@ libDir = "./components/external-libraries"
 srcFiles = [
     "cJSON/cJSON.c",
     "cJSON/cJSON_Utils.c",
+    "mongoose/mongoose.c",
+    "libyuarel/yuarel.c"
 ]
 includeRoots = [
     f'ESPAsyncWebServer/extras',
@@ -16,12 +18,15 @@ libraryRequires = [
 # Special case for fmt::fmt since it requires including parent dir
 includeDirs = [
     "cJSON",
+    "mongoose",
+    "libyuarel"
 ]
 srcRoots = [
     "TMCStepper/src",
     "ESP-FlexyStepper/src",
     "AsyncTCP/src",
-    "ESPAsyncWebServer/src"
+    "ESPAsyncWebServer/src",
+    "mjson/src"
 ]
 
 for srcRoot in srcRoots:

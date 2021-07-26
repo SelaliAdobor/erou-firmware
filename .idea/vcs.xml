@@ -21,6 +21,9 @@
     <mapping directory="$PROJECT_DIR$/components/external-libraries/ezTime" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/external-libraries/fmt-esp32" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/external-libraries/json11" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/components/external-libraries/libyuarel" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/components/external-libraries/mjson" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/components/external-libraries/mongoose" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/external-libraries/moodycamel-queue-esp32" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/fmt-esp32" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/main/lib/croncpp" vcs="Git" />
