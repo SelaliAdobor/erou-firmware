@@ -3,8 +3,6 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 #include <new>
-#include "fmt/format.h"
-#include "fmt/printf.h"
 #include <functional>
 #include <etl_types.h>
 #include <commands.h>
@@ -16,10 +14,9 @@ Debug debugInstance = Debug();
 //ESP-IDF callback for debug statements
 int esp_apptrace_vprintf(const char *fmt, va_list ap);
 
-void Debug::setup(Api* apiInstance) {
-  api = apiInstance;
+void Debug::setup() {
   esp_log_set_vprintf(esp_apptrace_vprintf);
-  api->registerWsRoute("/debug", Get, [this](WsMessage &message) {
+  em::registerWsRoute("/debug", em::method::Get, [this](const em::WsMessage &message) {
     if (message.text.size() > ShortString::MAX_SIZE) {
       debugE("Debug command longer than max length %d", ShortString::MAX_SIZE);
       return;
@@ -108,14 +105,14 @@ void stripUnicode(LongString &str) {
   DebugMessage *queueMessage = nullptr;
   for (;;) {
     if (xQueueReceive(messageQueue, &queueMessage, portMAX_DELAY)) {
-      queueMessage->content->repair(); //Required by ETL after memcpy
 
       auto message = std::unique_ptr<DebugMessage>(queueMessage);
-      auto messageContent = std::unique_ptr<LongString>(queueMessage->content);
+      auto messageContent = std::unique_ptr<char>(queueMessage->content);
 
       if (message->level >= loggingLevel) {
-        stripUnicode(*messageContent);
-        api->sendAllWs("/debug", messageContent->c_str());
+        LongString unicodeString = LongString(messageContent.get());
+        stripUnicode(unicodeString);
+        em::sendAllWs("/debug", std::string_view(unicodeString.c_str()));
       }
       delay(500);
     }

@@ -4,7 +4,7 @@
 #include "api.h"
 #include "requestUtil.h"
 
-void Api::addDispense(HttpRequest&,HttpReply&) {
+void Api::addDispense(em::Request&,em::Response&) {
 //  double test;
 //  auto json = requestParamAs<std::string>(request, "test");
 // // auto missingFields = g(json.c_str(), NumberParam("$.b", &test));

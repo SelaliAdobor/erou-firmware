@@ -24,14 +24,10 @@
 #include <vector>
 #include <AsyncTCP.h>
 #include <etl_types.h>
-#include <fmt/printf.h>
-#include <api.h>
 
 #include "config_constants.h"
 #include "freertos/stream_buffer.h"
-#include "fmt/format.h"
 #include "debugCommand.h"
-#include "mongoose.h"
 
 enum DebugLevel {
   Verbose, Info, Error
@@ -45,7 +41,7 @@ class Debug {
 
   struct DebugMessage {
     DebugLevel level;
-    LongString *content;
+    char *content;
   };
 
   TaskHandle_t messageLoopHandle{};
@@ -56,50 +52,31 @@ class Debug {
   [[noreturn]] void commandRunnerTask();
 
   struct mg_connection *connection;
-  Api* api;
  public:
   Debug();
 
   DebugLevel loggingLevel = DebugLevel::Verbose;
 
-  template<typename... Args>
-  void printMessage(DebugLevel level,const char *format,
-                    const Args &...args) {
-    auto *formattedString = new LongString(fmt::sprintf(format, args...).c_str());
+  void printMessage(DebugLevel level, const char *format, ...)
+  __attribute__((__format__ (__printf__, 3, 4))) {
+    va_list ap;
+    va_start(ap, format);
+
     auto *message = new DebugMessage{
         .level = level,
-        .content = formattedString,
+        .content = nullptr,
     };
-    Serial.println(formattedString->c_str());
+
+    vasprintf(&message->content, format, ap);
+    va_end(ap);
+    Serial.println(message->content);
     xQueueSend(messageQueue, &message, pdMS_TO_TICKS(5));
   }
 
-  template<typename... Args>
-  void printV(const char *format, const Args &...args) {
-    printMessage(DebugLevel::Verbose, format, args...);
-  };
-
-  template<typename... Args>
-  inline void printI(const char *format, const Args &...args) {
-    printMessage(DebugLevel::Info, format, args...);
-  };
-
-  template<typename... Args>
-  void printE(const char *format, const Args &...args) {
-    printMessage(DebugLevel::Error, format, args...);
-  };
-
-  void setup(Api* api);
+  void setup();
 
   static constexpr const char *debugEndpoint = "/debug";
-  void handleWsMessage(struct mg_ws_message *message);
 
-  void setConnection(struct mg_connection *conn) { this->connection = conn; }
-  void clearConnection(struct mg_connection *conn) {
-    if (this->connection == conn) {
-      connection = nullptr;
-    }
-  }
 };
 
 extern Debug debugInstance;

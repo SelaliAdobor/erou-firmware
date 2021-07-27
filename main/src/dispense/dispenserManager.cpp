@@ -79,7 +79,7 @@ void DispenseManager::runDispenseTask() {
       debugE("Unable to get local time");
       continue;
     }
-    debugE("Waiting %d seconds to dispense %s", (*next).secondsUntil(currentTime), (*next).name.c_str());
+    debugE("Waiting %f seconds to dispense %s", (*next).secondsUntil(currentTime), (*next).name.c_str());
     vTaskDelayUntil(&lastDispenseTaskRun,
                     pdMS_TO_TICKS((*next).secondsUntil(currentTime) * 1000));
     runDispense(*next);

@@ -35,7 +35,7 @@ void StoredSettings::writeToDisk() {
   File file = SPIFFS.open(dbTempPath, writeMode);
   size_t bytesWritten = serializeJson(backingDocument, file);
   file.flush();
-  debugV("Container definition size written to disk: %s", bytesWritten);
+  debugV("Container definition size written to disk: %zu", bytesWritten);
   file.close();
 
   /**

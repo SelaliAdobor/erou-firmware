@@ -3,7 +3,7 @@
 #include "container.h"
 #include "config_constants.h"
 #include "etl/unordered_map.h"
-
+#include "storedSettings.h"
 static const char *const containerEmptyKey = "containers/contents/%s/isEmpty";
 static const char *const containerRootKey = "containers/contents/%s/";
 using ContainerMap = etl::unordered_map<int, Container, config::physical::containerCount>;

@@ -14,6 +14,7 @@
 #include <requestUtil.h>
 #include "mongoose.h"
 #include "commands.h"
+#include "easymongoose.h"
 
 TMC2130Stepper driver(pins::stepper::cs);
 
@@ -76,10 +77,11 @@ void setupTimezone() {
 }
 
 void setupDebug() {
-  debugInstance.setup(api);
+  debugInstance.setup();
   DebugCommands::setup(&motion);
 }
 
 void setupWebServer() {
+  em::setup(config::network::hostname);
   api.setup();
 }
