@@ -8,7 +8,7 @@
 
 std::optional<Container> ContainerManager::getContainerContent(const int container) {
   if (container >= config::physical::containerCount) {
-    debugE("Attempted to retrieve out of bounds container %d", container);
+    debugE(logtags::dispense,"Attempted to retrieve out of bounds container %d", container);
     return {};
   }
   if (!containerContents.count(container)) {
@@ -20,7 +20,7 @@ std::optional<Container> ContainerManager::getContainerContent(const int contain
 
 void ContainerManager::setContainerContent(int container, const Container &content) {
   if (container >= config::physical::containerCount) {
-    debugE("Attempted to set out of bounds container %d", container);
+    debugE(logtags::dispense,"Attempted to set out of bounds container %d", container);
     return;
   }
   containerContents[container] = content;

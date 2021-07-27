@@ -1,7 +1,6 @@
 
 
 #include <yuarel.h>
-#include <regex>
 #include "easymongoose.h"
 #include "stringUtil.h"
 #include "wsdebug.h"
@@ -9,7 +8,7 @@ namespace em {
 TaskHandle_t EasyMongoose::listenTask = nullptr;
 
 std::optional<std::string_view> EasyMongoose::setup(const std::string_view &localhost) {
-  if(listenTask != nullptr){
+  if (listenTask != nullptr) {
     return "Already setup EasyMongoose, only one instance is currently supported";
   }
   mg_mgr_init(&manager);
@@ -49,16 +48,16 @@ void EasyMongoose::registerRoute(std::string_view route,
                          .routeParamNames = em::RouteParamNamesMap(),
                          .handler =  std::move(handler)
                      });
-    debugI("Found no params %s", route.data());
+    debugI(logtags::network, "Found no params %s", route.data());
     return;
   }
 
   size_t currentCharacter = 0;
   int currentPart = 0;
-  const static std::regex paramRegex(":.*?(?:(?!/|$).)*");
+ // const static std::regex paramRegex(":.*?(?:(?!/|$).)*");
 
   em::RouteParamNamesMap foundParams;
-
+  auto routeGlob = std::string(route);
   while (currentCharacter < route.length()) {
     if (route[currentCharacter] == '/') {
       currentPart++;
@@ -66,15 +65,16 @@ void EasyMongoose::registerRoute(std::string_view route,
       size_t nextSlash = route.find('/', currentCharacter) - 1;
       std::string_view paramName = route.substr(currentCharacter + 1, nextSlash - currentCharacter);
       foundParams.insert({currentPart, ShortString(paramName.begin(), paramName.end())});
+      routeGlob.replace(currentCharacter, paramName.length(),"*");
       currentCharacter = nextSlash;
       continue;
     }
     currentCharacter++;
   }
-  debugI("Found %d params for %s", foundParams.size(), route.data());
+  debugI(logtags::network, "Found %d params for %s with glob %s", foundParams.size(), route.data(), routeGlob.c_str());
   routes.push_back({
                        .route = route,
-                       .routeGlob= std::regex_replace(std::string(route), paramRegex, "*"),
+                       .routeGlob= routeGlob,
                        .method = method,
                        .routeParamNames = foundParams,
                        .handler =  std::move(handler),
@@ -97,14 +97,14 @@ void EasyMongoose::registerWsRoute(std::string_view route,
 void EasyMongoose::sendAllWs(const std::string_view route, std::string_view message) {
   for (auto &[definition, clients] : wsConnections) {
     if (definition.route.compare(route) == 0) {
-      debugV("Matched route for WS sendAll: %s", route.data());
+      debugV(logtags::network, "Matched route for WS sendAll: %s", route.data());
       for (auto &client : clients) {
         mg_ws_send(client, message.data(), message.length(), WEBSOCKET_OP_TEXT);
       }
       return;
     }
   }
-  debugE("Send all found no matching routes: %s", route.data());
+  debugE(logtags::network, "Send all found no matching routes: %s", route.data());
 }
 
 void EasyMongoose::routeRequest(mg_http_message *message,
@@ -123,7 +123,7 @@ void EasyMongoose::routeRequest(mg_http_message *message,
   static yuarel_param params[maxQueryParams]; //Precludes use of concurrent handlers
   if (message->query.ptr) {
     auto queryString = std::unique_ptr<char>(strndup(message->query.ptr, message->query.len));
-    debugI("Query: %s", queryString.get());
+    debugI(logtags::network, "Query: %s", queryString.get());
     int queryParamCount = yuarel_parse_query(queryString.get(), '&', params, maxQueryParams);
     for (int i = 0; i < queryParamCount; i++) {
       request.params.insert({ShortString(params[i].key), std::string_view(params[i].val)});
@@ -133,7 +133,7 @@ void EasyMongoose::routeRequest(mg_http_message *message,
   for (auto&[name, value] : request.params) {
     if (name.is_truncated()) {
       //TODO: Reply with error code;
-      debugE("Truncated param name: %d %s", name.is_truncated(), name.c_str());
+      debugE(logtags::network, "Truncated param name: %d %s", name.is_truncated(), name.c_str());
     }
   }
 

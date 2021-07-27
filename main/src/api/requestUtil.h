@@ -10,13 +10,13 @@ using LongStringParam = std::pair<const char *, LongString *>;
 using BoolParam = std::pair<const char *, bool *>;
 
 template<class T, class F, class...Args>
-std::vector<T> accumulateParams(F f, Args &&...args) {
+static std::vector<T> accumulateParams(F f, Args &&...args) {
   std::vector<T> result = {f(std::forward<Args>(args)) ...};
   return result;
 }
 
 template<typename... Params>
-std::vector<const char *> getJsonParams(JsonObject *json, Params... params) {
+static std::vector<const char *> getJsonParams(JsonObject *json, Params... params) {
   auto missingParams = accumulateParams<const char *>([=](auto ret) -> const char * {
 
     if constexpr(std::is_same<decltype(ret), DoubleParam>() ||
@@ -49,6 +49,6 @@ std::vector<const char *> getJsonParams(JsonObject *json, Params... params) {
 }
 
 template<typename... Params>
-std::vector<const char *> getJsonParams(mg_str *str, Params... params) {
+static std::vector<const char *> getJsonParams(mg_str *str, Params... params) {
   return getJsonParams<decltype(params)...>(str->ptr, str->len, params...);
 }

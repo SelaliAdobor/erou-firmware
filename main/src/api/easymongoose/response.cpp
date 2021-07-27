@@ -8,19 +8,20 @@
 
 namespace em {
 
-void Response::sendJson(StatusCode code, const std::function<void(JsonDocument & )> &builder) {
+void Response::sendJson(StatusCode code, const std::function<void(JsonDocument &)> &builder) {
   static DynamicJsonDocument replyDoc(512);
   replyDoc.clear();
   builder(replyDoc);
   if (replyDoc.overflowed()) {
+    debugE(logtags::network, "Overflowed json");
     sendText(InternalError, "Json response overflowed");
     return;
   }
   auto documentSize = measureJson(replyDoc) + 1; //Account for null terminator
   auto buffer = std::unique_ptr<char>(new char[documentSize]);
   serializeJson(replyDoc, buffer.get(), documentSize);
-  mg_http_reply(connection, code, headers::contentTypeJson , buffer.get());
-  debugE("Sending Json: %s %d", buffer.get(), documentSize);
+  mg_http_reply(connection, code, headers::contentTypeJson, buffer.get());
+  debugE(logtags::network, "Sending Json: %s %d", buffer.get(), documentSize);
   isSent = true;
 }
 

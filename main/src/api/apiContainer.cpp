@@ -7,13 +7,10 @@
 void Api::addContainer(em::Request &req, em::Response &res) {
   int index;
   Container content;
-  static DynamicJsonDocument json(2048);
-  json.clear();
-  auto error = deserializeJson(json, req.body.ptr, req.body.len);
+  auto [error, root] = req.parseJson<JsonObject>();
   if (error) {
     res.sendText(em::BadRequest, error.c_str());
   }
-  auto root = json.as<JsonObject>();
   auto missingFields = getJsonParams(&root,
                                      IntParam("index", &index),
                                      ShortStringParam ("id", &content.id),
@@ -25,7 +22,7 @@ void Api::addContainer(em::Request &req, em::Response &res) {
     res.sendJson(em::BadRequest, [&](auto &reply) {
       auto replyFields = reply.createNestedArray("missingFields");
       for (const auto *field : missingFields) {
-        debugV("Missing field %s", field);
+        debugV(logtags::network,"Missing field %s", field);
         replyFields.add(field);
       }
     });
@@ -49,11 +46,11 @@ void Api::addContainer(em::Request &req, em::Response &res) {
 
 void Api::getContainer(em::Request &req, em::Response &res) {
   if (req.params.count("id") < 1) {
-    debugE("Failed to parse index %s", req.url.data());
+    debugE(logtags::network,"Failed to parse index %s", req.url.data());
     return res.sendText(em::BadRequest, "failed to parse container number from path");
   }
 
-  int containerIndex = atoi(req.params["id"].data());
+  int containerIndex =3;// atoi(req.params["id"].data());
 
   if (containerIndex > config::physical::containerCount) {
     return res.sendText(em::BadRequest, "exceeded countainer count");

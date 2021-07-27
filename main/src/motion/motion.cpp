@@ -9,7 +9,7 @@
 #include "free_rtos_util.h"
 
 void Motion::setup() {
-  debugV("motion setup setting up stepper pins");
+  debugV(logtags::motion, "motion setup setting up stepper pins");
   SPI.begin();
 
   digitalWrite(pins::stepper::enable, HIGH);
@@ -22,7 +22,7 @@ void Motion::setup() {
   digitalWrite(pins::stepper::enable, LOW);
   stepper->setStepsPerRevolution(config::stepper::microsteps * config::stepper::stepsPerRotation);
 
-  debugV("motion setup setting up homing");
+  debugV(logtags::motion, "motion setup setting up homing");
   setupHoming();
 
   delay(1000);
@@ -35,7 +35,7 @@ void Motion::setup() {
               nullptr
   );
 
-  debugV("motion setup completed");
+  debugV(logtags::motion, "motion setup completed");
 }
 void Motion::setupDriver() const {
   driver->begin();
@@ -68,17 +68,17 @@ void Motion::setSpeedControl(bool enabled) {
         rAccelTosAccel(config::stepper::deceleration * 4.0F));
   }
 
-  debugV("motion speed control changed %d", enabled);
+  debugV(logtags::motion, "motion speed control changed %d", enabled);
 }
 
 void Motion::goToContainerAt(const int index) {
-  debugV("motion going to container, index %d", index);
+  debugV(logtags::motion, "motion going to container, index %d", index);
 
-  debugV("motion going to container starting homing");
+  debugV(logtags::motion, "motion going to container starting homing");
 
   goToHome(false);
 
-  debugV("motion going to container homed");
+  debugV(logtags::motion, "motion going to container homed");
   float scaledRpm = mapFloat(static_cast<float>(index), 0, config::physical::containerCount - 1,
                              config::motion::rpmContainerTravelMin,
                              config::motion::rpmContainerTravelMax);
@@ -86,7 +86,7 @@ void Motion::goToContainerAt(const int index) {
   if (rotation > 180) {
     rotation = -1 * (360 - rotation);
   }
-  debugV(
+  debugV(logtags::motion, 
       "motion going to container starting rotation, scaledRpm: %f rotated: %f",
       rpmToSps(scaledRpm), degToRev(rotation));
 
@@ -95,11 +95,11 @@ void Motion::goToContainerAt(const int index) {
   stepper->setSpeedInStepsPerSecond(rpmToSps(scaledRpm));
   stepper->moveRelativeInRevolutions(degToRev(rotation));
 
-  debugV("motion going to container finished");
+  debugV(logtags::motion, "motion going to container finished");
   currentContainer = index;
 }
 [[noreturn]] void Motion::checkStepperFaultTask() {
-  debugV("stepper fault task starting");
+  debugV(logtags::motion, "stepper fault task starting");
   for (;;) {
     delay(3000);
   }

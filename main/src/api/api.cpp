@@ -2,9 +2,10 @@
 #include "api.h"
 #include <arpa/inet.h>
 #include "easymongoose.h"
+#include "wsdebug.h"
 void Api::setup() {
-  if(!em::isListening()){
-    debugE("EasyMongoose is not listening");
+   if (!em::isListening()){
+    debugE(logtags::network,"EasyMongoose is not listening");
   }
 
   em::registerRoute("/container", em::method::Value::Get, [=](auto &&...args) { return addContainer(args...); });

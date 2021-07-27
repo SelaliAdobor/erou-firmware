@@ -12,7 +12,7 @@ void EasyMongoose::handleEvent(mg_connection *connection, int event, void *event
       break;
     }
     case MG_EV_ACCEPT: {
-      debugI("Accepted connection from peer: %s", peerIpString);
+      debugI(logtags::network,"Accepted connection from peer: %s", peerIpString);
       break;
     }
     case MG_EV_READ: {
@@ -35,17 +35,17 @@ void EasyMongoose::handleEvent(mg_connection *connection, int event, void *event
       break;
     }
     case MG_EV_CLOSE: {
-      debugI("Closed connection from peer: %s", peerIpString);
+      debugI(logtags::network, "Closed connection from peer: %s", peerIpString);
       for (auto &[definition, clients] : wsConnections) {
         if (std::find(clients.begin(), clients.end(), connection) != clients.end()) {
-          debugV("Matched route for WS client removal: %s", definition.route.data());
+          debugV(logtags::network, "Matched route for WS client removal: %s", definition.route.data());
           clients.erase(std::remove(clients.begin(), clients.end(), connection), clients.end());
         }
       }
       break;
     }
     default: {
-      debugE("Unhandled http event %d", event);
+      debugE(logtags::network, "Unhandled http event %d", event);
       break;
     }
   }
@@ -54,7 +54,7 @@ void EasyMongoose::handleEvent(mg_connection *connection, int event, void *event
 void EasyMongoose::handleWsMessage(mg_connection *connection, mg_ws_message *message) {
   for (auto &[definition, clients] : wsConnections) {
     if (std::find(clients.begin(), clients.end(), connection) != clients.end()) {
-      debugV("Matched route for WS message sending: %s", definition.route.data());
+      debugV(logtags::network, "Matched route for WS message sending: %s", definition.route.data());
       definition.handler({
                              .text = std::string_view(message->data.ptr, message->data.len),
                              .reply = [&connection](std::string_view message) {
@@ -86,10 +86,10 @@ void EasyMongoose::handleHttpMessage(mg_connection *connection, mg_http_message 
       continue;
     }
     if (mg_vcasecmp(&message->method, em::method::toString(definition.method)) != 0) {
-      debugI("Matched route but wrong method: %s", definition.routeGlob.c_str());
+      debugI(logtags::network, "Matched route but wrong method: %s", definition.routeGlob.c_str());
       continue;
     }
-    debugV("Matched route: %s", definition.routeGlob.c_str());
+    debugV(logtags::network, "Matched route: %s", definition.routeGlob.c_str());
     routeRequest(message, request, reply, definition);
     return;
   }
@@ -98,10 +98,10 @@ void EasyMongoose::handleHttpMessage(mg_connection *connection, mg_http_message 
       continue;
     }
     if (mg_vcasecmp(&message->method, em::method::toString(definition.method)) != 0) {
-      debugI("Matched route but wrong method: %s", definition.route.data());
+      debugI(logtags::network, "Matched route but wrong method: %s", definition.route.data());
       continue;
     }
-    debugV("Matched route: %s", definition.route.data());
+    debugV(logtags::network, "Matched route: %s", definition.route.data());
     clients.push_back(connection);
     return;
   }

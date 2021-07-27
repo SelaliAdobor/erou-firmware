@@ -1,5 +1,34 @@
 #pragma once
 
+enum class DebugLevel {
+  Disabled, Verbose, Info, Error
+};
+
+namespace logtags {
+static constexpr DebugLevel network = DebugLevel::Disabled;
+static constexpr DebugLevel esp = DebugLevel::Disabled;
+static constexpr DebugLevel dispense = DebugLevel::Disabled;
+static constexpr DebugLevel motion = DebugLevel::Disabled;
+static constexpr DebugLevel ota = DebugLevel::Disabled;
+static constexpr DebugLevel storage = DebugLevel::Disabled;
+static constexpr DebugLevel setup = DebugLevel::Disabled;
+static constexpr DebugLevel debug = DebugLevel::Disabled;
+}
+static constexpr DebugLevel compileDebugLevel = DebugLevel::Verbose;
+
+#define debugV(tag, fmt, ...)\
+  if constexpr(tag > compileDebugLevel){debugInstance.printMessage(DebugLevel::Verbose,"(%-25s)(%d)(%-10s)(C%d) " fmt, __FILE__, __LINE__ , __PRETTY_FUNCTION__, \
+                       xPortGetCoreID(), ##__VA_ARGS__);}
+#define debugI(tag, fmt, ...)\
+  if constexpr(tag > compileDebugLevel){debugInstance.printMessage(DebugLevel::Info,"\033[1;32m(%-25s)(%d)(%-10s)(C%d) \033[1;0m" fmt, __FILE__,__LINE__, \
+                       __PRETTY_FUNCTION__, xPortGetCoreID(), ##__VA_ARGS__);}
+#define debugESP(fmt, ...)\
+  if constexpr(logtags::esp > compileDebugLevel){ debugInstance.printMessage(DebugLevel::Info,"\043[1;33m(%-25s)(%-50s)(C%d) \033[1;0m" fmt, "esp",\
+                       "esp", xPortGetCoreID(), ##__VA_ARGS__);}
+#define debugE(tag, fmt, ...)\
+  if constexpr(tag > compileDebugLevel){ debugInstance.printMessage(DebugLevel::Error, "\033[1;31m(%-25s)(%d)(%-10s)(C%d) \033[1;0m" fmt, __FILE__,__LINE__, \
+                       __PRETTY_FUNCTION__, xPortGetCoreID(), ##__VA_ARGS__);}
+/*
 #define debugV(fmt, ...)\
   debugInstance.printMessage(DebugLevel::Verbose,"(%-25s)(%d)(%-10s)(C%d) " fmt, __FILE__, __LINE__ , __PRETTY_FUNCTION__, \
                        xPortGetCoreID(), ##__VA_ARGS__)
@@ -12,7 +41,7 @@
 #define debugE(fmt, ...)\
   debugInstance.printMessage(DebugLevel::Error, "\033[1;31m(%-25s)(%d)(%-10s)(C%d) \033[1;0m" fmt, __FILE__,__LINE__, \
                        __PRETTY_FUNCTION__, xPortGetCoreID(), ##__VA_ARGS__)
-
+*/
 #include "WiFiServer.h"
 
 #include "WiFi.h"
@@ -28,10 +57,6 @@
 #include "config_constants.h"
 #include "freertos/stream_buffer.h"
 #include "debugCommand.h"
-
-enum DebugLevel {
-  Verbose, Info, Error
-};
 
 class Debug {
  private:
@@ -66,7 +91,6 @@ class Debug {
         .level = level,
         .content = nullptr,
     };
-
     vasprintf(&message->content, format, ap);
     va_end(ap);
     Serial.println(message->content);

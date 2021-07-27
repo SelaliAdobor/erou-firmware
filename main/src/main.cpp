@@ -11,8 +11,6 @@
 #include "pins.h"
 #include <containerManager.h>
 #include <api.h>
-#include <requestUtil.h>
-#include "mongoose.h"
 #include "commands.h"
 #include "easymongoose.h"
 
@@ -37,7 +35,7 @@ void setupWifi() {
   WiFi.begin(ssid, password);
 
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    debugV("setting up wifi");
+    debugV(logtags::setup, "setting up wifi");
     delay(5000);
     ESP.restart();
   }
@@ -62,10 +60,10 @@ void setup() {
   setupDebug();
   setupWebServer();
 
-  debugI("setting up container manager");
+  debugI(logtags::setup, "setting up container manager");
   containerManager.setup();
 
-  debugI("setting up motion");
+  debugI(logtags::setup, "setting up motion");
   motion.setup();
 }
 void setupTimezone() {

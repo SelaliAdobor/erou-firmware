@@ -8,7 +8,7 @@ StoredSettings storedSettings = StoredSettings();
 
 void StoredSettings::loadFromDisk() {
   if (!SPIFFS.exists(dbPath)) {
-    debugE("No container.db defined on load.");
+    debugE(logtags::storage, "No container.db defined on load.");
     return;
   }
 
@@ -20,13 +20,13 @@ void StoredSettings::loadFromDisk() {
   containerDb.close();
   DeserializationError error = deserializeJson(backingDocument, reinterpret_cast<const char *>(dbBuffer.get()));
   if (error) {
-    debugE("Failed to parse settings json: %s", error.c_str());
+    debugE(logtags::storage, "Failed to parse settings json: %s", error.c_str());
     backingDocument.clear();
   }
   if(backingDocument.isNull()){
     backingDocument["settings"] = true;
   }
-  debugE("Read settings json size: %d", dbSize);
+  debugE(logtags::storage, "Read settings json size: %d", dbSize);
 }
 
 void StoredSettings::writeToDisk() {
@@ -35,7 +35,7 @@ void StoredSettings::writeToDisk() {
   File file = SPIFFS.open(dbTempPath, writeMode);
   size_t bytesWritten = serializeJson(backingDocument, file);
   file.flush();
-  debugV("Container definition size written to disk: %zu", bytesWritten);
+  debugV(logtags::storage, "Container definition size written to disk: %zu", bytesWritten);
   file.close();
 
   /**

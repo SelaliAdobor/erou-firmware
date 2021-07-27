@@ -9,7 +9,7 @@ double DispenseManager::secondsUntilNextDispense() {
   struct tm currentTime;
 
   if (!getLocalTime(&currentTime)) {
-    debugE("Unable to get local time");
+    debugE(logtags::dispense,"Unable to get local time");
     return {};
   }
 
@@ -31,7 +31,7 @@ std::optional<Dispense> DispenseManager::getNextDispense() {
   struct tm currentTime;
 
   if (!getLocalTime(&currentTime)) {
-    debugE("Unable to get local time");
+    debugE(logtags::dispense,"Unable to get local time");
     return {};
   }
   return getNextDispense(currentTime);
@@ -55,14 +55,14 @@ void DispenseManager::runDispense(const Dispense &dispense) {
   for (const auto &containerId : dispense.containerIds) {
     auto foundContainer = containerManager->getById(containerId);
     if (!foundContainer.has_value()) {
-      debugE("Attempted to dispense invalid container %s", containerId.c_str());
+      debugE(logtags::dispense,"Attempted to dispense invalid container %s", containerId.c_str());
       continue;
     }
-    debugE("Dispensing: %s", containerId.c_str());
+    debugE(logtags::dispense,"Dispensing: %s", containerId.c_str());
     auto[index, container] = foundContainer.value();
     motion->goToContainerAt(index);
     delay(10000); //Todo wait for input
-    debugE("Dispensed: %s", containerId.c_str());
+    debugE(logtags::dispense,"Dispensed: %s", containerId.c_str());
   }
 }
 
@@ -76,10 +76,10 @@ void DispenseManager::runDispenseTask() {
     struct tm currentTime;
 
     if (!getLocalTime(&currentTime)) {
-      debugE("Unable to get local time");
+      debugE(logtags::dispense,"Unable to get local time");
       continue;
     }
-    debugE("Waiting %f seconds to dispense %s", (*next).secondsUntil(currentTime), (*next).name.c_str());
+    debugE(logtags::dispense,"Waiting %f seconds to dispense %s", (*next).secondsUntil(currentTime), (*next).name.c_str());
     vTaskDelayUntil(&lastDispenseTaskRun,
                     pdMS_TO_TICKS((*next).secondsUntil(currentTime) * 1000));
     runDispense(*next);

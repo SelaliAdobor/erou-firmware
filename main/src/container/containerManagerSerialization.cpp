@@ -6,7 +6,7 @@ void ContainerManager::loadFromDisk() {
   static_assert(config::physical::containerCount < 999, "Serialization assumes a reasonable number of containers.");
   containerContents.clear();
   auto containerArray = storedSettings->get<JsonArray>("containers");
-  debugI("Found %d containers in settings", containerArray.size());
+  debugI(logtags::storage, "Found %d containers in settings", containerArray.size());
   for (int index = 0; index < config::physical::containerCount; index++) {
     JsonVariant container = containerArray.getElement(index);
     if(container.isNull() || container.isUndefined()){

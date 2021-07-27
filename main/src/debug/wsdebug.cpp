@@ -18,7 +18,7 @@ void Debug::setup() {
   esp_log_set_vprintf(esp_apptrace_vprintf);
   em::registerWsRoute("/debug", em::method::Get, [this](const em::WsMessage &message) {
     if (message.text.size() > ShortString::MAX_SIZE) {
-      debugE("Debug command longer than max length %d", ShortString::MAX_SIZE);
+      debugE(logtags::debug,"Debug command longer than max length %d", ShortString::MAX_SIZE);
       return;
     }
     char *data = strdup(message.text.data());
@@ -55,7 +55,7 @@ Debug::Debug() {
 
 [[noreturn]] void Debug::commandRunnerTask() {
   if (commandQueue == nullptr) {
-    debugE("Attempted to start command task without queue");
+    debugE(logtags::debug, "Attempted to start command task without queue");
   }
   for (;;) {
     LongString *commandStringAddress;
@@ -67,17 +67,17 @@ Debug::Debug() {
     bool commandRan = false;
     for (const DebugCommand &command : DebugCommands::registeredCommands) {
       if (commandString->find(command.name.data()) != 0) {
-        debugI("Failed to match command `%s`: `%d`", commandString->c_str(), commandString->find(command.name.data()));
+        debugI(logtags::debug, "Failed to match command `%s`: `%d`", commandString->c_str(), commandString->find(command.name.data()));
         continue;
       }
 
       if (commandString->length() > command.name.length()) {
         const LongString args = commandString->substr(command.name.length());
-        debugI("Matched Command `%s` with args `%s`", command.name.data(), args.c_str());
+        debugI(logtags::debug, "Matched Command `%s` with args `%s`", command.name.data(), args.c_str());
         command.run(args);
       } else {
         const LongString empty;
-        debugI("Matched Command `%s`", command.name.data());
+        debugI(logtags::debug, "Matched Command `%s`", command.name.data());
         command.run(empty);
       }
 
@@ -85,7 +85,7 @@ Debug::Debug() {
       break;
     }
     if (!commandRan) {
-      debugE("Unknown Command: %s", commandString->c_str());
+      debugE(logtags::debug, "Unknown Command: %s", commandString->c_str());
     }
   }
 }
@@ -100,7 +100,7 @@ void stripUnicode(LongString &str) {
 
 [[noreturn]] void Debug::messageBroadcastTask() {
   if (messageQueue == nullptr) {
-    debugE("Attempted to start broadcast task without queue");
+    debugE(logtags::debug,"Attempted to start broadcast task without queue");
   }
   DebugMessage *queueMessage = nullptr;
   for (;;) {

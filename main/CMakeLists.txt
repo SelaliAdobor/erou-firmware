@@ -10,6 +10,7 @@ idf_component_register(SRCS
         "src/api/apiContainer.cpp"
         "src/api/apiScheduler.cpp"
         "src/api/easymongoose/response.cpp"
+        "src/api/easymongoose/request.cpp"
         "src/api/easymongoose/easymongoose.cpp"
         "src/api/easymongoose/easymongooseHandlers.cpp"
         "src/debug/wsdebug.cpp"

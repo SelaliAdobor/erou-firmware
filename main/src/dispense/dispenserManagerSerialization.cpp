@@ -1,7 +1,5 @@
 #include <storedSettings.h>
-#include "containerManager.h"
 #include "wsdebug.h"
-#include "json11.hpp"
 #include "SPIFFS.h"
 #include "dispenserManager.h"
 #include "dispense.h"
@@ -10,7 +8,7 @@ void DispenseManager::loadFromDisk() {
   dispenses.clear();
   auto loadedDispenses = storedSettings->get<JsonArray>("dispenses");
   if (loadedDispenses.isNull()) {
-    debugI("No dispense found on disk");
+    debugI(logtags::dispense,"No dispense found on disk");
   }
   for (auto dispense : loadedDispenses) {
     if (!dispense.is<Dispense>()) {
@@ -18,7 +16,7 @@ void DispenseManager::loadFromDisk() {
     }
     dispenses.push_back(dispense);
   }
-  debugI("Loaded %d dispenses from disk", dispenses.size());
+  debugI(logtags::dispense,"Loaded %d dispenses from disk", dispenses.size());
 }
 
 void DispenseManager::writeToDisk() {
@@ -29,6 +27,6 @@ void DispenseManager::writeToDisk() {
       loadedDispenses[i] = dispenses[i];
     }
   });
-  debugI("Wrote %d dispenses to disk", dispenses.size());
+  debugI(logtags::dispense,"Wrote %d dispenses to disk", dispenses.size());
 }
 
