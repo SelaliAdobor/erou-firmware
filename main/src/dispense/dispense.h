@@ -14,6 +14,6 @@ class Dispense {
   ShortString name;
   ShortString cronSchedule;
   ContainerIdList containerIds;
-  std::optional<double> secondsUntil(tm startingTime);
-  std::optional<double> secondsUntil();
+  std::optional<time_t> secondsUntil(time_t startingTime);
+  std::optional<time_t> secondsUntil();
 };

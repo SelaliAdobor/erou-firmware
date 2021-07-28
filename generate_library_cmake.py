@@ -7,7 +7,8 @@ srcFiles = [
     "cJSON/cJSON.c",
     "cJSON/cJSON_Utils.c",
     "mongoose/mongoose.c",
-    "libyuarel/yuarel.c"
+    "libyuarel/yuarel.c",
+    "ccronexpr/ccronexpr.c"
 ]
 includeRoots = [
     f'ESPAsyncWebServer/extras',
@@ -19,7 +20,8 @@ libraryRequires = [
 includeDirs = [
     "cJSON",
     "mongoose",
-    "libyuarel"
+    "libyuarel",
+    "ccronexpr"
 ]
 srcRoots = [
     "TMCStepper/src",

@@ -15,7 +15,7 @@ Debug debugInstance = Debug();
 int esp_apptrace_vprintf(const char *fmt, va_list ap);
 
 void Debug::setup() {
-  esp_log_set_vprintf(esp_apptrace_vprintf);
+  //esp_log_set_vprintf(esp_apptrace_vprintf);
   em::registerWsRoute("/debug", em::method::Get, [this](const em::WsMessage &message) {
     if (message.text.size() > ShortString::MAX_SIZE) {
       debugE(logtags::debug, "Debug command longer than max length %d", ShortString::MAX_SIZE);
@@ -107,7 +107,8 @@ void stripUnicode(LongString &str) {
   }
   DebugMessage *queueMessage = nullptr;
   for (;;) {
-    if (xQueueReceive(messageQueue, &queueMessage, portMAX_DELAY)) {
+    delay(500);
+    if (em::isListening() && xQueueReceive(messageQueue, &queueMessage, portMAX_DELAY)) {
 
       auto message = std::unique_ptr<DebugMessage>(queueMessage);
       //Uses C-style free after being built by asprintf call
@@ -118,7 +119,6 @@ void stripUnicode(LongString &str) {
         stripUnicode(unicodeString);
         em::sendAllWs("/debug", std::string_view(unicodeString.c_str()));
       }
-      delay(500);
     }
   }
 }

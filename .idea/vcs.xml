@@ -15,6 +15,7 @@
     <mapping directory="$PROJECT_DIR$/components/external-libraries/arduinoWebSockets" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/external-libraries/binn" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/external-libraries/cJSON" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/components/external-libraries/ccronexpr" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/external-libraries/constexpr-to-string" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/external-libraries/croncpp" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/components/external-libraries/espsoftwareserial" vcs="Git" />

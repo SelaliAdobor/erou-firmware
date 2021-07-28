@@ -56,6 +56,5 @@ endfunction()
 
 add_subdirectory(lib/etl)
 add_subdirectory(lib/json11)
-add_subdirectory(lib/croncpp)
 
-target_link_libraries(${COMPONENT_LIB} PUBLIC etl json11 croncpp)
+target_link_libraries(${COMPONENT_LIB} PUBLIC etl json11)

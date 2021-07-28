@@ -13,6 +13,7 @@ class DispenseManager {
   Motion *motion;
   TickType_t lastDispenseTaskRun;
   [[noreturn]] void runDispenseTask();
+  bool invalidateDispense;
  public:
   explicit DispenseManager(ContainerManager *container_manager, StoredSettings *stored_settings) :
       containerManager(container_manager), storedSettings(stored_settings) {}
@@ -21,7 +22,7 @@ class DispenseManager {
   void loadFromDisk();
   void writeToDisk();
 
-  std::optional<Dispense> getNextDispense(tm startingFrom);
+  std::optional<Dispense> getNextDispense(time_t startingFrom);
   std::optional<Dispense> getNextDispense();
   void addDispense(Dispense dispense);
   std::optional<Dispense> getDispenseById(const ShortString& id);

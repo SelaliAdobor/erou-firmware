@@ -3,5 +3,4 @@
 
 namespace em {
 DynamicJsonDocument Request::json = DynamicJsonDocument(1024);
-Request * Request::lastParsed = nullptr;
 }

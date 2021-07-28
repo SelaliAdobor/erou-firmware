@@ -1,23 +1,30 @@
 #include "dispense.h"
-#include "croncpp.h"
+#include "ccronexpr.h"
 
-std::optional<double> Dispense::secondsUntil(tm startingTime) {
-  auto cron = cron::make_cron(cronSchedule.c_str());
-  if(!cron.has_value()){
-    debugE(logtags::dispense, "Failed to parse Dispense cron string %s", cronSchedule.c_str())
+std::optional<time_t> Dispense::secondsUntil(time_t startingTime) {
+  cron_expr expr;
+  const char* err = nullptr;
+  memset(&expr, 0, sizeof(expr));
+  cron_parse_expr(cronSchedule.c_str(), &expr, &err);
+
+  if(err != nullptr){
+    debugE(logtags::dispense, "Failed to parse Dispense cron string %s: %s", cronSchedule.c_str(), err)
     return {};
   }
-  tm next = cron::cron_next(cron.value(), startingTime);
-  time_t nowT = mktime(&startingTime);
-  time_t nextT = mktime(&next);
-  return difftime(nowT, nextT);
+
+  time_t nextT = cron_next(&expr, startingTime);
+  if(nextT < 0){
+    debugE(logtags::dispense, "Parsed cron string couldn't be converted to time %s", cronSchedule.c_str())
+    return {};
+  }
+  auto timeUntil = difftime(nextT, startingTime);
+  if(timeUntil < 0){
+    debugE(logtags::dispense, "Parsed cron string resulted in past time %s", cronSchedule.c_str())
+    return {};
+  }
+  return timeUntil;
 }
 
-std::optional<double> Dispense::secondsUntil() {
-  tm currentTime;
-  if (!getLocalTime(&currentTime)) {
-    debugE(logtags::dispense, "Unable to get local time");
-    return {};
-  }
-  return secondsUntil(currentTime);
+std::optional<time_t> Dispense::secondsUntil() {
+  return secondsUntil(time(nullptr));
 }

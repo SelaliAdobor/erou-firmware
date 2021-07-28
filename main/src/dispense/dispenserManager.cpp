@@ -1,11 +1,8 @@
 #include "dispenserManager.h"
-#include "croncpp.h"
 #include <chrono>
 #include <wsdebug.h>
 #include <SPIFFS.h>
 #include "free_rtos_util.h"
-
-
 
 void DispenseManager::setup() {
   loadFromDisk();
@@ -19,20 +16,14 @@ void DispenseManager::setup() {
 }
 
 std::optional<Dispense> DispenseManager::getNextDispense() {
-  struct tm currentTime;
-
-  if (!getLocalTime(&currentTime)) {
-    debugE(logtags::dispense, "Unable to get local time");
-    return {};
-  }
-  return getNextDispense(currentTime);
+  return getNextDispense(time(nullptr));
 }
 
-std::optional<Dispense> DispenseManager::getNextDispense(tm startingFrom) {
-  if(dispenses.empty()){
+std::optional<Dispense> DispenseManager::getNextDispense(time_t startingFrom) {
+  if (dispenses.empty()) {
     return {};
   }
-  double timeUntilSoonest = std::numeric_limits<double>::max();
+  size_t timeUntilSoonest = std::numeric_limits<size_t>::max();
   std::optional<Dispense> soonest = {};
 
   for (Dispense dispense : dispenses) {
@@ -63,35 +54,53 @@ void DispenseManager::runDispense(const Dispense &dispense) {
 
 void DispenseManager::runDispenseTask() {
   for (;;) {
-    delay(500);
-    auto next = getNextDispense();
-    if (!next.has_value() ) {
-      continue;
-    }
-    struct tm currentTime;
-
-    if (!getLocalTime(&currentTime)) {
+    reset:
+    invalidateDispense = false;
+    struct tm checkTime;
+    if (!getLocalTime(&checkTime)) {
       debugE(logtags::dispense, "Unable to get local time");
+      delay(10000);
       continue;
     }
-    auto timeUntilNext = (*next).secondsUntil(currentTime);
-    if(!timeUntilNext.has_value()){
-      debugE(logtags::dispense, "Dispense had invalid next time");
+
+    auto next = getNextDispense();
+    if (!next.has_value()) {
+      debugV(logtags::dispense, "No dispense found");
+      delay(10000);
       continue;
     }
-    auto msUntilNext = *timeUntilNext * 1000;
-    debugE(logtags::dispense,
-           "Waiting %f seconds to dispense %s",
-           msUntilNext,
-           (*next).name.c_str());
-    vTaskDelayUntil(&lastDispenseTaskRun,
-                    pdMS_TO_TICKS(msUntilNext));
-    runDispense(*next);
+
+    time_t startTime;
+    time(&startTime);
+
+    std::optional<time_t> timeUntilNext = next->secondsUntil(startTime);
+    if (!timeUntilNext.has_value()) {
+      debugV(logtags::dispense, "Time until dispense invalid");
+      delay(10000);
+      continue;
+    }
+    time_t timeNextStarts = startTime + *timeUntilNext;
+    time_t timeRemaining;
+    do {
+      if (invalidateDispense) {
+        goto reset;
+      }
+      timeRemaining = timeNextStarts - time(nullptr);
+      debugV(logtags::dispense, "Time until dispense %ld:", timeRemaining);
+
+      delay(std::min(timeRemaining, time_t(10)) * 1000);
+    } while (timeRemaining > 0);
+
+    if (!invalidateDispense) {
+      debugI(logtags::dispense, "Dispensing!");
+      runDispense(*next);
+    }
   }
 }
 
 void DispenseManager::addDispense(Dispense dispense) {
   dispenses.push_back(dispense);
+  invalidateDispense = true;
   writeToDisk();
 }
 
@@ -105,3 +114,4 @@ std::optional<Dispense> DispenseManager::getDispenseById(const ShortString &id) 
   return dispense != dispenses.end() ? std::make_optional<Dispense>()
                                      : std::optional<Dispense>(*dispense);
 }
+

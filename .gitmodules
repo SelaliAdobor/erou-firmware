@@ -25,9 +25,6 @@
 [submodule "components/external-libraries/cJSON"]
 	path = components/external-libraries/cJSON
 	url = git@github.com:DaveGamble/cJSON.git
-[submodule "main/lib/croncpp"]
-	path = main/lib/croncpp
-	url = git@github.com:SelaliAdobor/croncpp.git
 [submodule "components/external-libraries/ESPAsyncWebServer"]
 	path = components/external-libraries/ESPAsyncWebServer
 	url = git@github.com:SelaliAdobor/ESPAsyncWebServer.git
@@ -43,3 +40,6 @@
 [submodule "components/ArduinoJson"]
 	path = components/ArduinoJson
 	url = git@github.com:bblanchon/ArduinoJson.git
+[submodule "components/external-libraries/ccronexpr"]
+	path = components/external-libraries/ccronexpr
+	url = git@github.com:staticlibs/ccronexpr.git

@@ -1,10 +1,9 @@
- #include <wsdebug.h>
+#include <wsdebug.h>
 #include <SPIFFS.h>
 #include <cjson_util.h>
 #include "storedSettings.h"
 
 StoredSettings storedSettings = StoredSettings();
-
 
 void StoredSettings::loadFromDisk() {
   if (!SPIFFS.exists(dbPath)) {
@@ -23,7 +22,7 @@ void StoredSettings::loadFromDisk() {
     debugE(logtags::storage, "Failed to parse settings json: %s", error.c_str());
     backingDocument.clear();
   }
-  if(backingDocument.isNull()){
+  if (backingDocument.isNull()) {
     backingDocument["settings"] = true;
   }
   debugE(logtags::storage, "Read settings json size: %d", dbSize);
@@ -52,21 +51,17 @@ void StoredSettings::writeToDisk() {
   SPIFFS.remove(dbTempPath);
 }
 
-
 void StoredSettings::setup() {
   loadFromDisk();
 }
 
 void StoredSettings::reset() {
-  for(int i = 0; i < backingDocument.size(); i++){
-    backingDocument.remove(i);
-  }
-  backingDocument["settings"] = true;
-  SPIFFS.remove(dbPath);
+  backingDocument.clear();
+  backingDocument.as<JsonObject>()["settings"] = true;
   writeToDisk();
 }
 
-void StoredSettings::runTransaction(const std::function<void(JsonDocument&)>& transaction) {
+void StoredSettings::runTransaction(const std::function<void(JsonDocument &)> &transaction) {
   commitOnSet = false;
   transaction(backingDocument);
   commitOnSet = true;
