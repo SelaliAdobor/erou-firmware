@@ -2,7 +2,7 @@
 
 #define FIELD_NAME(x) #x
 namespace ARDUINOJSON_NAMESPACE {
-template<>
+ template<>
 struct Converter<Container> {
   static bool toJson(const Container &src, VariantRef dst) {
     dst[FIELD_NAME(id)] = src.id.c_str();
@@ -22,10 +22,10 @@ struct Converter<Container> {
   }
 
   static bool checkJson(VariantConstRef src) {
-    return src[FIELD_NAME(id)]
-        && src[FIELD_NAME(name)]
-        && src[FIELD_NAME(description)]
-        && src[FIELD_NAME(quantity)];
+    return src[FIELD_NAME(id)].is<std::string>()
+        && !src[FIELD_NAME(name)].is<std::string>()
+        && !src[FIELD_NAME(description)].is<std::string>()
+        && !src[FIELD_NAME(quantity)].is<std::string>();
   }
 };
 }

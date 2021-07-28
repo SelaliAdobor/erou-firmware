@@ -6,8 +6,8 @@ enum class Value {
 };
 
 static constexpr Value Get = Value::Get;
-static constexpr Value Post = Value::Get;
-static constexpr Value Put = Value::Get;
+static constexpr Value Post = Value::Post;
+static constexpr Value Put = Value::Put;
 
 inline const char *toString(Value method) {
   switch (method) {

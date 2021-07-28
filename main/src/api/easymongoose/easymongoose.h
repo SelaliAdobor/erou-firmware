@@ -24,7 +24,7 @@ class EasyMongoose {
   static constexpr size_t maxQueryParams = 20;
   static constexpr size_t maxRoutes = 10;
   static constexpr size_t maxPort = 99999; //Warning: Must change setup buffer size simultaneously
-  static constexpr size_t listenTaskSize = 4028;
+  static constexpr size_t listenTaskSize = 8048;
   static constexpr size_t listenTaskPriority = 8;
 
   static TaskHandle_t listenTask;
@@ -56,23 +56,22 @@ class EasyMongoose {
   void registerRoute(std::string_view route, method::Value method, HttpRouteHandler handler);
   void registerWsRoute(std::string_view route, method::Value method, WsHandler handler);
   void sendAllWs(std::string_view route, std::string_view message);
+  static EasyMongoose instance;
 };
-
-static EasyMongoose instance;
 inline std::optional<std::string_view> setup(const std::string_view &localhost) {
-  return instance.setup(localhost);
+  return EasyMongoose::instance.setup(localhost);
 }
 inline std::optional<std::string_view> setup(const int port) {
-  return instance.setup(port);
+  return EasyMongoose::instance.setup(port);
 }
 inline void registerRoute(const std::string_view route, method::Value method, const HttpRouteHandler &handler) {
-  return instance.registerRoute(route, method, handler);
+  return EasyMongoose::instance.registerRoute(route, method, handler);
 }
 inline void registerWsRoute(const std::string_view &route, method::Value method, const WsHandler &handler) {
-  return instance.registerWsRoute(route, method, handler);
+  return EasyMongoose::instance.registerWsRoute(route, method, handler);
 }
 inline void sendAllWs(const std::string_view &route, const std::string_view &message) {
-  return instance.sendAllWs(route, message);
+  return EasyMongoose::instance.sendAllWs(route, message);
 }
 inline bool isListening() {
   return EasyMongoose::listenTask != nullptr;

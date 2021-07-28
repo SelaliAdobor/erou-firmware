@@ -20,7 +20,8 @@ ESP_FlexyStepper stepper;
 
 Motion motion = Motion(&driver, &stepper); // NOLINT(cppcoreguidelines-slicing)
 ContainerManager containerManager = ContainerManager(&storedSettings);
-Api api = Api(&containerManager);
+DispenseManager dispenseManager = DispenseManager(&containerManager, &storedSettings);
+Api api = Api(&containerManager, &dispenseManager);
 
 void setupWebServer();
 void setupDebug();
@@ -62,6 +63,7 @@ void setup() {
 
   debugI(logtags::setup, "setting up container manager");
   containerManager.setup();
+  dispenseManager.setup();
 
   debugI(logtags::setup, "setting up motion");
   motion.setup();
@@ -71,6 +73,8 @@ void setupTimezone() {
   auto storedTimezone = storedSettings.get<JsonVariant>(timezoneSettingsKey);
   if (storedTimezone.is<const char *>()) {
     configTzTime(storedTimezone.as<const char *>(), config::network::ntpServer);
+  }else{
+    configTzTime("EST5EDT,M3.2.0/2:00:00,M11.1.0/2:00:00", config::network::ntpServer);
   }
 }
 

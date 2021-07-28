@@ -6,8 +6,8 @@
 class DispenseManager {
  private:
   static constexpr size_t maxDispenseDefinitions = 5 * 7; //5 regiments per day
-  using DispenseList = etl::vector<Dispense, maxDispenseDefinitions>;
-  DispenseList dispenses;
+
+  std::vector<Dispense> dispenses;
   ContainerManager *containerManager;
   StoredSettings *storedSettings;
   Motion *motion;
@@ -21,10 +21,9 @@ class DispenseManager {
   void loadFromDisk();
   void writeToDisk();
 
-  double secondsUntilNextDispense();
   std::optional<Dispense> getNextDispense(tm startingFrom);
   std::optional<Dispense> getNextDispense();
-  void addDispense(ShortString id, ShortString name, ShortString cronSchedule, ContainerIdList containers);
-  std::optional<Dispense*> getDispenseById(const ShortString& id);
+  void addDispense(Dispense dispense);
+  std::optional<Dispense> getDispenseById(const ShortString& id);
   void runDispense(const Dispense &dispense);
 };

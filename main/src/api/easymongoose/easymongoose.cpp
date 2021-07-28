@@ -5,6 +5,7 @@
 #include "stringUtil.h"
 #include "wsdebug.h"
 namespace em {
+EasyMongoose EasyMongoose::instance = EasyMongoose();
 TaskHandle_t EasyMongoose::listenTask = nullptr;
 
 std::optional<std::string_view> EasyMongoose::setup(const std::string_view &localhost) {
@@ -54,7 +55,6 @@ void EasyMongoose::registerRoute(std::string_view route,
 
   size_t currentCharacter = 0;
   int currentPart = 0;
- // const static std::regex paramRegex(":.*?(?:(?!/|$).)*");
 
   em::RouteParamNamesMap foundParams;
   auto routeGlob = std::string(route);
@@ -65,7 +65,7 @@ void EasyMongoose::registerRoute(std::string_view route,
       size_t nextSlash = route.find('/', currentCharacter) - 1;
       std::string_view paramName = route.substr(currentCharacter + 1, nextSlash - currentCharacter);
       foundParams.insert({currentPart, ShortString(paramName.begin(), paramName.end())});
-      routeGlob.replace(currentCharacter, paramName.length(),"*");
+      routeGlob.replace(currentCharacter, nextSlash - currentCharacter,"*");
       currentCharacter = nextSlash;
       continue;
     }
@@ -79,7 +79,6 @@ void EasyMongoose::registerRoute(std::string_view route,
                        .routeParamNames = foundParams,
                        .handler =  std::move(handler),
                    });
-
 }
 
 void EasyMongoose::registerWsRoute(std::string_view route,
@@ -97,7 +96,6 @@ void EasyMongoose::registerWsRoute(std::string_view route,
 void EasyMongoose::sendAllWs(const std::string_view route, std::string_view message) {
   for (auto &[definition, clients] : wsConnections) {
     if (definition.route.compare(route) == 0) {
-      debugV(logtags::network, "Matched route for WS sendAll: %s", route.data());
       for (auto &client : clients) {
         mg_ws_send(client, message.data(), message.length(), WEBSOCKET_OP_TEXT);
       }

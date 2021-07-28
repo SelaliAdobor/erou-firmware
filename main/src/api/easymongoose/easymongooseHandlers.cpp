@@ -38,7 +38,7 @@ void EasyMongoose::handleEvent(mg_connection *connection, int event, void *event
       debugI(logtags::network, "Closed connection from peer: %s", peerIpString);
       for (auto &[definition, clients] : wsConnections) {
         if (std::find(clients.begin(), clients.end(), connection) != clients.end()) {
-          debugV(logtags::network, "Matched route for WS client removal: %s", definition.route.data());
+          debugI(logtags::network, "Matched route for WS client removal: %s", definition.route.data());
           clients.erase(std::remove(clients.begin(), clients.end(), connection), clients.end());
         }
       }
@@ -83,6 +83,7 @@ void EasyMongoose::handleHttpMessage(mg_connection *connection, mg_http_message 
 
   for (em::HttpRouteDefinition &definition : routes) {
     if (!mg_http_match_uri(message, definition.routeGlob.c_str())) {
+      debugI(logtags::network, "Skipping route: %s", definition.routeGlob.c_str());
       continue;
     }
     if (mg_vcasecmp(&message->method, em::method::toString(definition.method)) != 0) {
@@ -105,7 +106,9 @@ void EasyMongoose::handleHttpMessage(mg_connection *connection, mg_http_message 
     clients.push_back(connection);
     return;
   }
-  reply.sendText(em::NotFound, "Path not found");
+  debugV(logtags::network, "Failed to match route out of %d routes", routes.size());
+
+  reply.sendText(em::NotFound, "EasyMongoose: Failed to match registered path");
 }
 
 }

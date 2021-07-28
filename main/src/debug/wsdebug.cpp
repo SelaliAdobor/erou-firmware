@@ -18,7 +18,7 @@ void Debug::setup() {
   esp_log_set_vprintf(esp_apptrace_vprintf);
   em::registerWsRoute("/debug", em::method::Get, [this](const em::WsMessage &message) {
     if (message.text.size() > ShortString::MAX_SIZE) {
-      debugE(logtags::debug,"Debug command longer than max length %d", ShortString::MAX_SIZE);
+      debugE(logtags::debug, "Debug command longer than max length %d", ShortString::MAX_SIZE);
       return;
     }
     char *data = strdup(message.text.data());
@@ -67,7 +67,10 @@ Debug::Debug() {
     bool commandRan = false;
     for (const DebugCommand &command : DebugCommands::registeredCommands) {
       if (commandString->find(command.name.data()) != 0) {
-        debugI(logtags::debug, "Failed to match command `%s`: `%d`", commandString->c_str(), commandString->find(command.name.data()));
+        debugI(logtags::debug,
+               "Failed to match command `%s`: `%d`",
+               commandString->c_str(),
+               commandString->find(command.name.data()));
         continue;
       }
 
@@ -100,14 +103,15 @@ void stripUnicode(LongString &str) {
 
 [[noreturn]] void Debug::messageBroadcastTask() {
   if (messageQueue == nullptr) {
-    debugE(logtags::debug,"Attempted to start broadcast task without queue");
+    debugE(logtags::debug, "Attempted to start broadcast task without queue");
   }
   DebugMessage *queueMessage = nullptr;
   for (;;) {
     if (xQueueReceive(messageQueue, &queueMessage, portMAX_DELAY)) {
 
       auto message = std::unique_ptr<DebugMessage>(queueMessage);
-      auto messageContent = std::unique_ptr<char>(queueMessage->content);
+      //Uses C-style free after being built by asprintf call
+      auto messageContent = std::unique_ptr<char, decltype(std::free) *>(queueMessage->content, std::free);
 
       if (message->level >= loggingLevel) {
         LongString unicodeString = LongString(messageContent.get());

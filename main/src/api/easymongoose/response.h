@@ -11,6 +11,7 @@ struct Response {
   bool isSent;
 
   void sendJson(StatusCode code, const std::function<void(JsonDocument & )> &builder);
+  void sendMissingFields(const std::vector<const char *> &missingFields);
   void sendText(StatusCode code, const char *text);
 };
 }
