@@ -44,7 +44,7 @@ void Api::getContainer(em::Request &req, em::Response &res) {
     return res.sendText(em::BadRequest, "failed to parse container number from path");
   }
 
-  int containerIndex = 3;// atoi(req.params["id"].data());
+  int containerIndex = atoi(req.params["id"].data());
 
   if (containerIndex > config::physical::containerCount) {
     return res.sendText(em::BadRequest, "exceeded countainer count");
